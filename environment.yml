@@ -1,0 +1,16 @@
+name: amath-481-581
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - matplotlib
+  - jupyter
+  - pytorch
+  - pip
+  - pip:
+      - jax
+      - jaxlib
