@@ -1,5 +1,205 @@
-\chapter{ODEs, PDEs, and the need for numerical methods}
+\chapter{ODEs, PDEs, and the need for numerical methods
+and analysis}
 
+In this course we focus on solution methods for some ordinary differential 
+equations (ODEs) and partial differential equations (PDEs). Recall that 
+an ODE involves functions of a single variable and their derivatives, while a PDE involves functions of multiple variables and their partial derivatives. A typical first 
+order ODE is of the form 
+\begin{equation}\label{eq:first_order_ode}
+    \frac{du}{dt} = f(t,u),
+\end{equation}
+where $u:[a,b] \mapsto \R$ is a function of the single variable $t$ and $f:[a,b] \times \R \mapsto \R$ is a given function, often called the right-hand side of the ODE or a forcing term in the physical context. Higher order ODEs often take the form 
+\begin{equation}\label{eq:high_order_ode}
+    \frac{d^n u}{dt^n} = f(t,u,\frac{du}{dt},\frac{d^2 u}{dt^2},\dots,\frac{d^{n-1} u}{dt^{n-1}})
+\end{equation}
+where now $u:[a,b] \mapsto \R$ is a function of the single variable $t$ and $f:[a,b] \times \R^n \mapsto \R$ is  given. We say that \eqref{eq:high_order_ode} is an $n$-th order ODE.
+
+ODEs are incredibly useful in modeling a wide range of physical, biological, and engineering systems, where the evolution of a quantity over time can be described by its rate of change. This is why we typically think of $u$ as a function of time $t$. 
+
+\begin{example}[Harmonic Oscillator]\label{ex:harmonic_oscillator}
+    The harmonic oscillator is described by the second-order ODE
+    \begin{equation}\label{eq:mass_spring}
+        \frac{d^2 u}{dt^2} + \omega^2 u = 0,
+    \end{equation}
+    where $u(t)$ represents the displacement from equilibrium and $\omega$ is the angular frequency. 
+    This equation models the motion of a simple harmonic oscillator, such as a mass on a spring, where the restoring force is proportional to
+    the displacement from equilibrium; see, e.g., 
+    \cite[Ch.~5]{taylor2005classical} for a classical treatment. 
+    In the case of the mass-spring system, $\omega = \sqrt{k/m}$,
+    where $k$ is the spring constant and $m$ is the mass, 
+    see \Cref{fig:mass_spring}.
+
+    Thinking purely in terms of the physics, the state of this 
+    system should depend on its condition at some initial time, 
+    for simplicty we take this time to be $t=0$. It is 
+    natural for us to specify the initial conditions (IC) of the 
+    system, which is typically the initial location/displacement
+    as well as the velocity of the mass. Hence, we can supplement 
+    \eqref{fig:mass_spring} with the ICs: 
+    \begin{equation*}
+        u(0) = u_0, \quad \frac{du}{dt}(0) = v_0.
+    \end{equation*}
+    With these conditions we can solve the problem analytically to 
+    obtain the solution 
+    \begin{equation}\label{eq:harmonic_oscillator_solution}
+        u(t) = u_0 \cos(\omega t) + \frac{v_0}{\omega} \sin(\omega t), \qquad 
+        \forall t \ge 0.
+    \end{equation}
+    Plugging this solution back into the ODE verifies that 
+    it satisfies it along with the ICs. 
+
+    \begin{figure}[htp]
+        \centering
+        \begin{tikzpicture}[>=Latex, thick]
+            % ground
+            \draw (-0.8,0) -- (6,0);
+            \foreach \x in {-0.6,-0.2,...,5.8}
+                \draw (\x,0) -- ++(-0.25,-0.25);
+
+            % wall
+            \draw (-0.8,-0.3) -- (-0.8,2.4);
+            \foreach \y in {-0.1,0.3,...,2.4}
+                \draw (-0.8,\y) -- ++(-0.25,0.25);
+
+            % equilibrium reference line
+            \draw[dashed] (2,-0.6) -- (2,2.4);
+            \node[above] at (2,2.4) {equilibrium};
+
+            % spring
+            \draw[decorate, decoration={coil, aspect=0.4, segment length=5pt, amplitude=6pt, pre length=0.15cm, post length=0.15cm}] (-0.8,1.1) -- (3,1.1);
+
+            % mass
+            \draw[fill=gray!20] (3,0) rectangle (4.5,2.2);
+            \node at (3.75,1.1) {$m$};
+
+            % displacement arrow
+            \draw[<->] (2,-0.4) -- (3,-0.4);
+            \node[below] at (2.5,-0.4) {$u(t)$};
+        \end{tikzpicture}
+        \includegraphics[width=0.4\textwidth]{Lectures/Lec1/harmonic_oscillator.png}
+        \caption{(Left) A mass-spring system. The mass $m$ is attached to a wall by a spring with constant $k$, and $u(t)$ denotes its displacement from the equilibrium position. (Right) An example plot of the 
+        analytic solution \eqref{eq:harmonic_oscillator_solution}
+        with initial conditions $u_0 = 1$ and $v_0 = 0.5$ and 
+        $\omega = 2$.}
+        \label{fig:mass_spring}
+    \end{figure}
+
+\end{example}
+
+ODE models can also be extended to describe the evolution of 
+various qunatities that are dependent on each other, often 
+thought of as the evolution of a system of interacting components.
+In this case we replace $u(t)$ as a scalar function with 
+a vector-valued function $\ub: [a, b] \mapsto \R^d$, 
+where $\ub(t) = (u_1(t), \dots, u_d(t))$ with $u_i(t)$ representing the $i$-th component of the system at time $t$. Then the evolution of the state of the 
+system can be described by a system of ODEs of the form
+\begin{equation}\label{eq:system_of_odes}
+    \frac{d^n\ub}{dt^n} = \fb(t, \ub, \frac{d\ub}{dt}, \frac{d^2\ub}{dt^2}, \dots, \frac{d^{n-1}\ub}{dt^{n-1}}),
+\end{equation}
+where $\fb: [a, b] \times (\R^d)^n \mapsto \R^d$ is now the 
+right hand side function. 
+
+\begin{example}[Compartmental Disease Model]\label{ex:compartmental_disease_model}
+    Let us consider a simple compartmental model for 
+    the spread of disease in a population. In this model,
+    the population is divided into different compartments based on their disease status, such as susceptible ($S$), infected ($I$), and recovered ($R$) individuals. The model tracks the number of individuals in each compartment over time.
+    To make the notation consistent with \eqref{eq:system_of_odes}, 
+    we define the state vector as $\ub = (S, I, R)$ and $n=1$. 
+
+    The dynamics of the compartments can be described by the following system of ODEs:
+    \begin{equation*}
+            \frac{dS}{dt} = -\beta S I, \quad 
+            \frac{dI}{dt} = \beta S I - \gamma I, \quad
+            \frac{dR}{dt} = \gamma I.
+    \end{equation*}
+    where $\beta$ is the infection rate with $\beta SI$ denoting 
+    the rate at which susceptible individuals become infected while 
+    $\gamma$ is the recovery rate. This model is commonly referred to as the SIR model and is widely used in epidemiology to study the spread of infectious diseases, originally introduced in \cite{kermack1927contribution}.
+    Note that this is overly simple as the model assumes that recovered
+    individuals gain permanent immunity and cannot be reinfected.
+
+    Interestingly, different choices of $\beta, \gamma$ can lead to
+    qualitatively different dynamics, such as the occurrence of
+    epidemics or the eventual eradication of the disease. We
+    show some examples of this behavior in 
+    Figure~\ref{fig:sir_dynamics}, obtained by simulating the 
+    model with techniques that we will learn about in this course.
+    In this example we need to specify ICs for all three compratments. 
+    The numerics shown in the figure assume $S(0) = 0.95$, $I(0) = 0.05$, 
+    and $R(0) = 0$, i.e., a small population of infected with a 
+    large susceptible population.
+
+    \begin{figure}[htp]
+        \centering
+        \includegraphics[width=\textwidth]{Lectures/Lec1/sir_dynamics.png}
+        \caption{Simulated SIR dynamics from a forward Euler solver for
+        three choices of $\beta,\gamma$, starting from a common initial
+        condition of 95\% susceptible and 5\% infected individuals.
+        (Left) A fast and severe epidemic. 
+        (Center) A slower and milder epidemic. 
+        (Right) The disease dies out without an epidemic.}
+        \label{fig:sir_dynamics}
+    \end{figure}
+\end{example}
+
+In the example above we have already encountered the main topic 
+of interest to this course. Even though in \Cref{ex:harmonic_oscillator}
+we had an analytic solution to plot, the solutions in 
+\Cref{ex:compartmental_disease_model} are numerical, and 
+obtained by running a numerical algorithm. These examples 
+already show how easily we can run into a complexity wall where 
+traditional analytical methods may fail to provide solutions, 
+necessitating the use of numerical techniques. This becomes 
+even more apparent when we consider PDEs. 
+
+A typical second order PDE in space-time takes the form 
+\begin{equation}\label{eq:second_order_pde}
+    \frac{\partial u}{\partial t} = 
+    f(t, u, \partial u/\partial x, \partial^2 u/\partial x^2),
+\end{equation}
+where $t$ represents time, say on the interval $[0,T]$ and 
+$x$ represents the spatial coordinate, say on the interval $[0,L]$, and $u(t,x)$ is the unknown function of both time and space. Notice that now 
+the function $u: [0,T] \times [0,L] \to \R$  depends on both time and space.
+which makes this fundamentally different from the ODE setup. 
+PDEs are generally more complex than ODEs and their study is a 
+major area of mathematics \cite{evans2010partial}. This is for 
+good reason since PDEs describe some of the most 
+fundamental phenomena in physics, engineering, and other sciences.
+
+\begin{example}[Heat Equation]\label{ex:heat_equation}
+    The heat equation describes the distribution of heat (or variation in temperature) in a given region over time. In one spatial dimension, it takes the form
+    \begin{equation}
+        \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2},
+    \end{equation}
+    where $u(t,x)$ represents the temperature at time $t$ and position $x$, and $\alpha > 0$ is the thermal diffusivity constant. This PDE is typically accompanied by initial and boundary conditions to fully specify the problem. Here we 
+    will consider zero Dirichlet boundary conditions, i.e.,
+    \begin{equation}
+        u(t,0) = u(t,L) = 0, \quad t \ge 0,
+    \end{equation}
+    and an initial condition
+    \begin{equation}
+        u(0,x) = u_0(x), \quad x \in [0,L].
+    \end{equation}
+    We show a numerical solution of this problem in \Cref{fig:heat_equation}
+    where we compare a bad (unstable) numerical solution 
+    with a good (stable) one. We clearly see that the left plot 
+    is not physical, we anticipate heat would spread smoothly 
+    over time rather than exhibiting erratic oscillations. 
+    This is a numerical artifact, one that we will understand 
+    deeply in this course.
+
+    
+    \begin{figure}[htp]
+        \centering
+        \includegraphics[width=\textwidth]{Lectures/Lec1/heat_equation.png}
+        \caption{Numerical solution of the 1D heat equation. 
+        (Left) An unstable numerical solution giving 
+        nonsensical results. (Right) A stable numerical 
+        solution giving physically reasonable results.}
+        \label{fig:heat_equation}
+    \end{figure}
+
+\end{example}
 
 
 \bibliographystyle{plainnat}
