@@ -1,0 +1,23 @@
+# LaTeX auxiliary/build files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.run.xml
+*.nav
+*.snm
+*.vrb
+*.figlist
+*.makefile
+*.xdv
+
+# PDF output (comment out if you want to track the compiled PDF)
+*.pdf
