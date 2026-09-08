@@ -21,3 +21,7 @@
 
 # PDF output (comment out if you want to track the compiled PDF)
 *.pdf
+
+# Private solution material (tracked in AMATH-481-581-Private)
+ComputationalHWs/
+TheoryHWs/
