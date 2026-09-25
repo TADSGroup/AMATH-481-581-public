@@ -1,4 +1,5 @@
 \chapter{Review of calculus}
+\label{ch:Lec-1-calculus}
 
 The following is a brief review of some concepts from 
 calculus that we will use throughout the course. 
@@ -8,11 +9,301 @@ For a more detailed treatment see the classic texts
 
 \section{Partial derivatives, gradients, and other useful operators}
 
+Throughout this section we consider a scalar function $u: \Omega \to \R$
+or a vector-valued function $\fb: \Omega \to \R^m$, where $\Omega
+\subseteq \R^d$ is an open set and $\xb = (x_1, x_2, \ldots, x_d) \in
+\Omega$. We write $u \in C^k(\Omega)$ to mean that $u$ is $k$-times
+continuously differentiable on $\Omega$.
+
+\begin{definition}[Partial derivative]
+    The partial derivative of $u$ with respect to $x_i$ at a point
+    $\xb \in \Omega$ is defined as
+    \begin{equation*}
+        \frac{\partial u}{\partial x_i}(\xb) :=
+        \lim_{h \to 0} \frac{u(\xb + h \mbf{e}_i) - u(\xb)}{h},
+    \end{equation*}
+    provided the limit exists, where $\mbf{e}_i \in \R^d$ is the $i$-th
+    standard basis vector.
+\end{definition}
+In words, $\partial u/\partial x_i$ measures the rate of change of $u$
+as we move in the $x_i$ direction while holding all other coordinates
+fixed. More generally, the directional derivative of $u$ at $\xb$ in the
+direction $\vb \in \R^d$ is defined as
+\begin{equation*}
+    D_\vb u(\xb) := \lim_{h \to 0} \frac{u(\xb + h\vb) - u(\xb)}{h},
+\end{equation*}
+which reduces to the partial derivative $\partial u/\partial x_i$ when
+$\vb = \mbf{e}_i$.
+
+\begin{definition}[Gradient]
+    Suppose $u \in C^1(\Omega)$. The gradient of $u$ at $\xb \in \Omega$
+    is the vector of first partial derivatives
+    \begin{equation*}
+        \nabla u(\xb) :=
+        \begin{bmatrix}
+            \dfrac{\partial u}{\partial x_1}(\xb) \\[1ex]
+            \vdots \\[0.5ex]
+            \dfrac{\partial u}{\partial x_d}(\xb)
+        \end{bmatrix} \in \R^d.
+    \end{equation*}
+\end{definition}
+The gradient encodes all directional derivatives of $u$ at once via the
+identity $D_\vb u(\xb) = \langle \nabla u(\xb), \vb \rangle$, and it
+points in the direction of steepest increase of $u$ at $\xb$; we will
+use this fact later in the course when we discuss optimization-based
+methods.
+
+\begin{lemma}[Equality of mixed partials]
+    \label{lem:mixed-partials}
+    If $u \in C^2(\Omega)$, then
+    \begin{equation*}
+        \frac{\partial^2 u}{\partial x_i \partial x_j}(\xb) =
+        \frac{\partial^2 u}{\partial x_j \partial x_i}(\xb),
+        \qquad \text{for all } \xb \in \Omega, \; i,j = 1,2,\ldots,d.
+    \end{equation*}
+\end{lemma}
+In other words, as long as $u$ is twice continuously differentiable, the
+order in which we take mixed partial derivatives does not matter.
+
+\begin{definition}[Jacobian]
+    Suppose $\fb = (f_1, f_2, \ldots, f_m): \Omega \to \R^m$ with each
+    $f_i \in C^1(\Omega)$. The Jacobian of $\fb$ at $\xb \in \Omega$ is
+    the matrix of first partial derivatives
+    \begin{equation*}
+        D\fb(\xb) :=
+        \begin{bmatrix}
+            \nabla f_1(\xb)^\top \\
+            \vdots \\
+            \nabla f_m(\xb)^\top
+        \end{bmatrix}
+        =
+        \left(
+            \frac{\partial f_i}{\partial x_j}(\xb)
+        \right)_{i=1,\ldots,m}^{j=1,\ldots,d}
+        \in \R^{m \times d}.
+    \end{equation*}
+\end{definition}
+When $m=1$ the Jacobian is just the (transposed) gradient, i.e.,
+$Du(\xb) = \nabla u(\xb)^\top$. The Jacobian is the natural
+generalization of the derivative to vector-valued functions of several
+variables: it is the matrix representing the best linear approximation
+of $\fb$ near $\xb$, i.e., $\fb(\xb + \mbf{h}) \approx \fb(\xb) +
+D\fb(\xb) \mbf{h}$ for $\mbf{h} \in \R^d$ small.
+
+\begin{definition}[Hessian]
+    Suppose $u \in C^2(\Omega)$. The Hessian of $u$ at $\xb \in \Omega$
+    is the matrix of second partial derivatives
+    \begin{equation*}
+        D^2 u(\xb) :=
+        \left(
+            \frac{\partial^2 u}{\partial x_i \partial x_j}(\xb)
+        \right)_{i,j=1}^d \in \R^{d \times d}.
+    \end{equation*}
+\end{definition}
+Note that $D^2 u(\xb) = D(\nabla u)(\xb)$, i.e., the Hessian is the
+Jacobian of the gradient. By the equality of mixed partials, $D^2
+u(\xb)$ is a symmetric matrix whenever $u \in C^2(\Omega)$.
+
+Finally, we introduce two operators acting on vector fields and scalar
+fields, respectively, that will reappear frequently once we start
+discussing PDEs.
+
+\begin{definition}[Divergence]
+    Suppose $\fb = (f_1, \ldots, f_d): \Omega \to \R^d$ with each $f_i
+    \in C^1(\Omega)$. The divergence of $\fb$ at $\xb \in \Omega$ is the
+    scalar
+    \begin{equation*}
+        \nabla \cdot \fb(\xb) :=
+        \sum_{i=1}^d \frac{\partial f_i}{\partial x_i}(\xb) =
+        \mathrm{tr}\big(D\fb(\xb)\big).
+    \end{equation*}
+\end{definition}
+
+\begin{definition}[Laplacian]
+    Suppose $u \in C^2(\Omega)$. The Laplacian of $u$ at $\xb \in
+    \Omega$ is the scalar
+    \begin{equation*}
+        \Delta u(\xb) := \nabla \cdot \nabla u(\xb) =
+        \sum_{i=1}^d \frac{\partial^2 u}{\partial x_i^2}(\xb).
+    \end{equation*}
+\end{definition}
+The Laplacian already made an appearance in \Cref{ex:heat_equation}: in
+one spatial dimension it is simply $\Delta u = \partial^2 u/\partial
+x^2$, and the heat equation reads $\partial u/\partial t = \alpha \Delta
+u$. We will see many more PDEs written in terms of the Laplacian and
+other differential operators introduced above later in the course.
+
+
 \section{Taylor's theorem}
+
+Taylor's theorem is arguably the single most important tool from
+calculus for this course: nearly every numerical method we study is
+derived, and its accuracy analyzed, by Taylor expanding the exact
+solution and comparing it to the numerical approximation.
+
+\begin{theorem}[Taylor's theorem, one variable]
+    \label{thm:taylor-1d}
+    Suppose $u \in C^{p+1}([a,b])$ for some integer $p \ge 0$ and let
+    $x, x+h \in [a,b]$. Then
+    \begin{equation*}
+        u(x+h) = \sum_{k=0}^p \frac{u^{(k)}(x)}{k!} h^k +
+        \frac{u^{(p+1)}(\xi)}{(p+1)!} h^{p+1},
+    \end{equation*}
+    for some $\xi$ between $x$ and $x+h$.
+\end{theorem}
+The polynomial $\sum_{k=0}^p u^{(k)}(x) h^k / k!$ is called the $p$-th
+order Taylor polynomial of $u$ about $x$, and the last term is the
+remainder; the theorem says that the remainder is exactly the "next"
+term in the series, evaluated at some unknown intermediate point $\xi$
+rather than at $x$ itself. In numerical analysis it is often more
+convenient to bound the size of the remainder rather than track it
+exactly, which motivates the following standard notation.
+
+\begin{definition}[Big-$\mO$ notation]
+    We say $f(h) = \mO(g(h))$ as $h \to 0$ if there exist constants $C >
+    0$ and $\delta > 0$ such that $|f(h)| \le C |g(h)|$ for all $|h| <
+    \delta$.
+\end{definition}
+For example, if $u \in C^{p+1}$ near $x$ with $|u^{(p+1)}|$ bounded,
+\Cref{thm:taylor-1d} implies
+\begin{equation*}
+    u(x+h) = \sum_{k=0}^p \frac{u^{(k)}(x)}{k!} h^k + \mO(h^{p+1}),
+\end{equation*}
+which is the form in which we will use Taylor's theorem most often.
+
+Taylor's theorem also extends to functions of several variables; we
+state the second order version here since it is the one we will use
+most.
+
+\begin{theorem}[Taylor's theorem, several variables]
+    Suppose $u \in C^3(\Omega)$ for $\Omega \subseteq \R^d$ open and let
+    $\xb, \xb + \mbf{h} \in \Omega$ with the line segment connecting them
+    contained in $\Omega$. Then
+    \begin{equation*}
+        u(\xb + \mbf{h}) = u(\xb) + \langle \nabla u(\xb), \mbf{h} \rangle +
+        \frac12 \langle D^2 u(\xb) \mbf{h}, \mbf{h} \rangle + \mO(\|\mbf{h}\|_2^3),
+    \end{equation*}
+    as $\mbf{h} \to 0$, where $\nabla u(\xb)$ and $D^2 u(\xb)$ are the
+    gradient and Hessian of $u$ at $\xb$, respectively.
+\end{theorem}
+This is simply the vector generalization of the familiar quadratic
+Taylor approximation from single-variable calculus, with the gradient
+playing the role of $u'(x)$ and the Hessian playing the role of
+$u''(x)$.
+
 
 \section{Integration by parts and Green's identities}
 
+Just as Taylor's theorem is our main tool for analyzing numerical
+differentiation, integration by parts is our main tool for making sense
+of weak or variational formulations of PDEs, which underlie finite
+element methods discussed later in the course.
+
+\begin{theorem}[Integration by parts]
+    Suppose $u, v \in C^1([a,b])$. Then
+    \begin{equation*}
+        \int_a^b u'(x) v(x) \, dx = u(b)v(b) - u(a)v(a) -
+        \int_a^b u(x) v'(x) \, dx.
+    \end{equation*}
+\end{theorem}
+In higher dimensions the analogous tool is the divergence theorem,
+which relates an integral over a domain to an integral over its
+boundary.
+
+\begin{theorem}[Divergence theorem]
+    Let $\Omega \subset \R^d$ be a bounded domain with piecewise smooth
+    boundary $\partial \Omega$ and outward unit normal $\mbf{n}$, and
+    suppose $\fb \in C^1(\overline\Omega)^d$. Then
+    \begin{equation*}
+        \int_\Omega \nabla \cdot \fb(\xb) \, d\xb =
+        \int_{\partial \Omega} \langle \fb(\xb), \mbf{n}(\xb) \rangle \, dS(\xb).
+    \end{equation*}
+\end{theorem}
+Applying the divergence theorem to the vector field $\fb = v \nabla u$
+for scalar functions $u \in C^2(\overline\Omega)$ and $v \in
+C^1(\overline\Omega)$, and using the product rule $\nabla \cdot (v
+\nabla u) = v \Delta u + \langle \nabla u, \nabla v \rangle$, yields the
+following pair of identities.
+
+\begin{corollary}[Green's first identity]
+    \label{cor:greens-first-identity}
+    Under the assumptions above,
+    \begin{equation*}
+        \int_\Omega \langle \nabla u(\xb), \nabla v(\xb) \rangle \, d\xb
+        = - \int_\Omega v(\xb) \Delta u(\xb) \, d\xb +
+        \int_{\partial \Omega} v(\xb) \frac{\partial u}{\partial n}(\xb)
+        \, dS(\xb),
+    \end{equation*}
+    where $\partial u/\partial n := \langle \nabla u, \mbf{n} \rangle$
+    is the normal derivative of $u$ on $\partial \Omega$.
+\end{corollary}
+
+\begin{corollary}[Green's second identity]
+    If in addition $v \in C^2(\overline\Omega)$, then
+    \begin{equation*}
+        \int_\Omega \big( u(\xb) \Delta v(\xb) - v(\xb) \Delta u(\xb)
+        \big) \, d\xb =
+        \int_{\partial \Omega} \left(
+            u(\xb) \frac{\partial v}{\partial n}(\xb) -
+            v(\xb) \frac{\partial u}{\partial n}(\xb)
+        \right) dS(\xb).
+    \end{equation*}
+\end{corollary}
+Green's first identity is the key step in deriving the weak formulation
+of PDEs such as Poisson's equation from \Cref{ex:poisson-bvp}.
+
+
 \section{Differentiating functions of vectors and matrices}
+
+We close this review by collecting a few differentiation rules for
+functions of vectors and matrices that will repeatedly come in handy,
+for instance when linearizing systems of nonlinear ODEs or setting up
+implicit time-stepping schemes.
+
+\begin{lemma}[Chain rule]
+    Suppose $\fb: \Omega \to \R^m$ and $\gb: U \to \R^p$ with $\fb(\Omega)
+    \subseteq U \subseteq \R^m$, $\fb \in C^1(\Omega)$, and $\gb \in
+    C^1(U)$. Then $\gb \circ \fb: \Omega \to \R^p$ is differentiable and
+    \begin{equation*}
+        D(\gb \circ \fb)(\xb) = D\gb(\fb(\xb)) \, D\fb(\xb),
+        \qquad \xb \in \Omega,
+    \end{equation*}
+    where the right-hand side is a product of a $p \times m$ matrix with
+    an $m \times d$ matrix.
+\end{lemma}
+
+The following gradient and Hessian formulas for linear and quadratic
+functions of a vector $\xb \in \R^d$ are especially useful and worth
+memorizing; see also \cite{matrixcookbook} for a much more extensive
+list of matrix calculus identities.
+
+\begin{itemize}
+    \item For a fixed vector $\mbf{a} \in \R^d$ and $u(\xb) = \langle \mbf{a},
+    \xb \rangle$, we have $\nabla u(\xb) = \mbf{a}$ and $D^2 u(\xb) = 0$.
+    \item For a fixed matrix $A \in \R^{d \times d}$ and $u(\xb) =
+    \langle A \xb, \xb \rangle$, we have $\nabla u(\xb) = (A + A^\top)
+    \xb$ and $D^2 u(\xb) = A + A^\top$; if $A$ is symmetric this
+    simplifies to $\nabla u(\xb) = 2A\xb$ and $D^2 u(\xb) = 2A$.
+    \item In particular, for $u(\xb) = \|\xb\|_2^2 = \langle \xb, \xb
+    \rangle$, we have $\nabla u(\xb) = 2\xb$ and $D^2 u(\xb) = 2I_d$.
+\end{itemize}
+
+Finally, we will also need to differentiate matrix-valued functions of
+a single scalar variable, such as a time-dependent matrix $A(t) \in
+\R^{n \times n}$. This is done entrywise, i.e., $A'(t) := (a_{ij}'(t))$,
+and the usual product rule carries over:
+\begin{equation*}
+    \frac{d}{dt} \big( A(t) B(t) \big) = A'(t) B(t) + A(t) B'(t).
+\end{equation*}
+A particularly important example for us is the matrix exponential of a
+constant matrix $A \in \R^{n \times n}$ introduced in
+\Cref{ch:Lec0-linalg}, which satisfies
+\begin{equation*}
+    \frac{d}{dt} e^{tA} = A e^{tA} = e^{tA} A, \qquad t \in \R.
+\end{equation*}
+This identity is what makes the matrix exponential the natural building
+block for solutions of linear systems of ODEs with constant
+coefficients.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

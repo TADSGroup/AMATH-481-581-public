@@ -1,5 +1,116 @@
-\chapter{Some applications and motivation for theory}
+\chapter{Some practical details and motivation for theory}
 
+In the last lecture we introduced the forward and backward Euler schemes 
+and applied them to solve the test ODE to get a sense for the accuracy and stability of these methods. In this lecture we will continue along this path by discussing some 
+more practical details and collect some examples that will further 
+motivate the need for more advanced numerical methods and also a theoretical 
+framework to understand the behavior and limitations of numerical methods.
+
+\section{Solving nonlinear ODEs with backwards Euler}
+
+Let us now consider a generic nonlinear ODE (still scalar for simplicity) of the 
+usual form 
+\begin{equation*}
+    \frac{d u}{d t} = f(t,u), \quad u(0) = c,
+\end{equation*}
+with a nonlinear right hand side $f: [0,T] \times \mathbb{R} \to \mathbb{R}$.
+The forward Euler scheme remains the same as before, namely
+\begin{equation*}
+    u_{n+1} = u_n + \Delta t \, f(t_n, u_n),
+\end{equation*}
+so we only need to be able to evaluate the function $f$ at given points
+$(t_n, u_n)$ that are known at each step. For completeness 
+the algorithm is summarized below. 
+
+\begin{algorithm}
+\caption{Forward Euler}\label{alg:forward_euler}
+\begin{algorithmic}
+\State Given $c$, $f$, $\Delta t$
+\State Set $u_0 = c$
+\For{$n = 0, 1, 2, \dots, T/\Delta t - 1$}
+\State Set $u_{n+1} = u_n + \Delta t \, f(t_n, u_n)$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+In contrast, for the backward Euler scheme, we need to solve for 
+$u_{n+1}$ implicitly, since the scheme takes the form 
+\begin{equation*}
+    u_{n+1} = u_n + \Delta t \, f(t_{n+1}, u_{n+1}).
+\end{equation*}
+Thus, a nonlinear equation needs to be solved. We can do this 
+using a any method suitable for solving nonlinear equations, 
+in particular, Newton's method. 
+
+\subsection{Newton's method for solving nonlinear equations}
+
+Consider a generic nonlinear equation of the form 
+\begin{equation*}
+    g(v) = 0,
+\end{equation*}
+where $g: \R \to \R$ is a nonlinear function that is continuously differentiable.
+Then Newton's method forms a sequence of approximations $\{v_k\}_{k \ge 0}$ according to the iteration
+\begin{equation*}
+    v_{k+1} = v_k - \frac{g(v_k)}{g'(v_k)},
+\end{equation*}
+starting from an initial guess $v_0$ where we are assuming that $g'$ (derivative of $g$)
+ remains bounded away from zero in the neighborhood of the solution $v$. Note that 
+ the convergence properties and criteria for Newton's method are 
+ nontrivial and depend on initialization and smoothness properties 
+ of $g$; see \cite[Thm.~3.5]{nocedal2006numerical} or any standard 
+ textbook on numerical analysis or optimization.
+ 
+ In the 
+ case of the backward Euler scheme, the nonlinear equation to be solved 
+ at step $n+1$ is 
+\begin{equation*}
+    g(v) = v - u_n - \Delta t \, f(t_{n+1}, v) = 0,
+\end{equation*}
+where we set $v \leftarrow u_{n+1}$. Thus, $g'(v) = 1 - \Delta t \, \frac{\partial f}{\partial u}(t_{n+1}, v)$. Then the subiterations take the explicit form 
+\begin{equation*}
+    v_{k+1} = v_k - \frac{v_k - u_n - \Delta t \, f(t_{n+1}, v_k)}{1 - \Delta t \, \frac{\partial f}{\partial u}(t_{n+1}, v_k)}.
+\end{equation*}
+It is often sufficient to start this iteration with $v_0 = u_n$.
+
+Since Newton's method converges asymptotically quadratically near the solution, 
+we only need a few iterations but we may never achieve exact convergence, i.e., 
+$v_k - v$ may not be exactly zero but it becomes very small as $k$ increases. 
+To this end, we typically terminate the iterations when a certain 
+tolerance is reached, i.e., 
+\begin{equation*}
+    |v_{k+1} - v_k| < \text{tol},
+\end{equation*}
+where $\text{tol}$ is a prescribed small positive number e.g. $10^{-8}$.
+To summarize the backward Euler scheme with Newton subiterations takes the 
+following form: 
+
+\begin{algorithm}
+\caption{Backward Euler with Newton Subiterations}\label{alg:backward_euler_newton}
+\begin{algorithmic}
+\State Given $c$, $f$, $\Delta t$, and tolerance $\text{tol} > 0$
+\State Set $u_0 = c$ 
+\For{$n = 0, 1, 2, \dots, T/\Delta t - 1$}
+\State Initialize $v_0 = u_n$
+\State Set $k = 0$
+\Repeat
+    \State Set $v_{k+1} = v_k - \frac{v_k - u_n - \Delta t \, f(t_{n+1}, v_k)}{1 - \Delta t \, \frac{\partial f}{\partial u}(t_{n+1}, v_k)}$
+    \State Increment $k \gets k+1$
+\Until{$|v_{k+1} - v_k| < \text{tol}$}
+\State Set $u_{n+1} = v_{k+1}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\section{Solving systems of ODEs}
+
+
+\subsection{Some motivating examples}
+
+\section{Numerical accuracy}
+
+\subsection{Measuring accuracy and its order}
+
+\subsection{Modifying forward Euler to obtain second order accuracy}
 
 \bibliographystyle{plainnat}
 \bibliography{references}

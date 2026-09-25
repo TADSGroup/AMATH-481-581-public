@@ -1,4 +1,210 @@
-\chapter{Numerical  methods for solving IVPs: forward and backward Euler methods}
+\chapter{Euler's methods for solving IVPs}
+
+We begin our discussion of numerical algorithms with the 
+two simplest and most widely used methods named after 
+Leonhard Euler: the forward Euler method and the backward Euler 
+method. Throughout this section we consider a first order 
+IVP of the form
+\begin{equation*}\label{eq:scalar-ivp-lec3}
+    \frac{du}{dt} = f(t, u), 
+\quad u(0) = c,
+\end{equation*}
+with the goal of estimating the solution on a finite 
+time interval $[0, T]$ for some $T > 0$. The ideas we develop 
+here can be immediately extended to systems of ODEs and 
+hence higher order problems as well. 
+
+The first question we need to address, before even considering 
+a numerical approximation of the solution $u(t)$ is 
+whether this problem is well-posed to begin with. In other words, 
+is the analytic problem solvable in a reasonable sense? for this 
+we adopt the sense of well-posedness introduced by 
+Jacques Hadamard \cite[Ch.~1]{higham2015princeton}: 
+
+\begin{quote}
+    A mathematical problem is well-posed if it satisfies the following three conditions:
+    \begin{enumerate}
+        \item A solution exists.
+        \item The solution is unique.
+        \item The solution's behavior changes continuously 
+        with the data.
+    \end{enumerate}
+\end{quote}
+
+In the case of ODEs this definition translates to the 
+existence and uniqueness of the solution $u(t)$ as well as 
+its continuous dependence on the initial data $u_0$. Intuitively,
+this continuous dependence means that if we perturb $u_0$ 
+slightly then the solution trajector $u(t)$ will also 
+change only slightly. The precise statement is as follows. See 
+\cite[Sec.~2.2 and 2.3]{perko2013differential} for details or 
+any other classic text on ODEs.
+
+\begin{theorem}[Well-posedness of IVPs]
+    Consider the IVP 
+    \begin{equation*}
+        \frac{d \ub}{dt} = \fb (t, \ub), \quad \ub(0) = \cb.
+    \end{equation*}
+    Suppose that $\fb: [0,T] \times \R^d \to \R^d$ 
+    is  continuous in its domain and 
+     Lipschitz continuous in $\ub$, i.e., 
+    there exists a constant $L > 0$ such that 
+    \begin{equation*}
+        |f (t, \ub) - f(t, \vb)| \le L \|\ub - \vb\|, \quad \forall (t, \ub), (t, \vb) \in [0,T] \times \R^d.
+    \end{equation*}
+    Then it holds that: 
+    \begin{enumerate}
+        \item (Existence and uniqueness) 
+        There exists a unique solution $\ub(t)$ for any $\ub_0 \in \R^d$.
+        
+        \item (Continuous dependence on initial data and right hand side) 
+           Suppose $\rb: [0,T] \times \R^d \to \R^d$ 
+         is a bounded perturbation of $\fb$, i.e., there exists a constant $M > 0$ such that 
+         \begin{equation*}
+            \|\rb(t, \ub)\| \le M, \quad \forall (t, \ub) \in [0,T] \times \R^d.
+         \end{equation*}
+         Further let $\hat\ub(t)$ be the solution of the perturbed IVP
+         \begin{equation*}
+            \frac{d \hat{\ub}}{dt} = \fb (t, \hat{\ub}) 
+            + \rb(t, \hat{\ub}), \quad \hat{\ub}(0) = \hat{\cb},
+         \end{equation*}
+         which we assume exists and is unique. Then we have 
+         \begin{equation*}
+            \| \ub(t) - \hat{\ub}(t) \| \le 
+            e^{Lt} \| \cb - \hat{\cb} \| + 
+            \frac{M}{L} (e^{Lt} - 1), \quad \forall t \in [0, T].
+         \end{equation*}
+    \end{enumerate}
+\end{theorem}
+Note that this theorem is stronger than what is asked for in 
+Hadamard notion of well-posedness. Here we treat both the 
+initial data and the right hand side as "data" for the problem and 
+we obtain not only continuous dependence on these data 
+but also Lipschitz continuous dependence.
+
+With piece of mind that the analytic problem is well-posed, we can now 
+proceed to obtain numerical approximations of it. 
+
+\section{Euler's methods, a simple application of Taylor's theorem}
+With the intuition that IVPs describe the evolution of dynamic quantities 
+we may choose to approximate $u(t)$ at a discrete set of points in time. 
+Consider a partition of the time interval $[0, T]$ given by
+\begin{equation*}
+    0 = t_0 < t_1 < \dots < t_N = T.
+\end{equation*}
+Then our goal is to approximate the values $u(t_n)$
+with a set of quantities $\{u_n\}_{n=0}^N$, i.e.,  $u_n \approx u(t_n)$
+for $n = 0, 1, \dots, N$. 
+We often refer to the points 
+$t_n$ as the {\it discrete time points} or {\it time mesh points}
+or {\it time grid points}. 
+We will also write $\delta t_n = t_{n+1} - t_n$
+to denote the {\it time step} between consecutive time points also called 
+{\it step size}. For simplicty let us assume that $\delta t_n 
+= \delta t$ for all $n = 0, 1, \dots, N-1$, i.e., the time steps are 
+constant. Such a mesh is called a {\it uniform mesh}.
+
+Recalling Taylor's theorem, we can write 
+\begin{equation*}
+    \begin{aligned}
+            u(t_{n+1}) & = u(t_n) + \frac{du}{dt}(t_n) \delta t + 
+    \mathcal{O}(\delta t^2) \\
+    & = u(t_n) + f(t_n, u(t_n)) \delta t + \mathcal{O}(\delta t^2) 
+    \end{aligned}
+\end{equation*}
+Throwing away the error $\mathcal{O}(\delta t^2)$, 
+we obtain the explicit formula:
+\begin{equation}\label{eq:explicit_euler}
+    u_{n+1} = u_n + f(t_n, u_n) \delta t, \quad n = 1, \dots, N-1, 
+    \quad u_0 = c.
+\end{equation}
+This formula is known as the explicit Euler method. Notice its simplicity: 
+we only need to know the current value $u_n$ and the function $f$. We 
+then simply plug $u_n$ into $f$ to compute the next value $u_{n+1}$.
+In this sense the explicit Euler method truly embodies our 
+intuition for "marching forward in time". 
+Also observe that we can rewrite the explicit Euler method 
+in the more faithful form: 
+\begin{equation*}
+    \frac{u_{n+1} - u_n}{\delta t} = f(t_n, u_n),
+\end{equation*}
+which reveals the method was obtained using a simple approximation of 
+the time derivative $\frac{d u}{dt}$. But, this observation 
+readily suggests that other types of approximations 
+of the time derivative may give rise to other numerical methods. Then 
+one wonders whether any of these schemes are somehow better than others? 
+As a simple example, let us rederive Euler's method 
+but this time using the Taylor expansion based at $t_{n+1}$ rather 
+than $t_n$: 
+\begin{equation*}
+    \begin{aligned}
+    u(t_n) & = u(t_{n+1}) - \frac{du}{dt}(t_{n+1}) \delta t + 
+    \mathcal{O}(\delta t^2) \\
+    & = u(t_{n+1}) - f(t_{n+1}, u(t_{n+1})) \delta t + \mathcal{O}(\delta t^2)
+    \end{aligned}
+\end{equation*}
+Once again throw away the error term to obtain 
+\begin{equation*}
+    u_{n+1}  = u_{n} + f(t_{n+1}, u_{n+1}) \delta t, \quad n = 0, \dots, N-1, 
+    \quad u_0 = c.
+\end{equation*}
+Notice that this equation now describes $u_{n+1}$ implicitly 
+in terms of $u_n$ at each step, hence it is known as the 
+{\it implicit Euler method.}
+It's faithful form is 
+\begin{equation*}
+    \frac{u_{n+1} - u_n}{\delta t} = f(t_{n+1}, u_{n+1}). 
+\end{equation*}
+At this point it seems that the explicit and implicit Euler schemes are 
+only slightly different with the implicit scheme being less convenient 
+to use: notice that to compute $u_{n+1}$ we now need to solve a 
+possibly nonlinear equation at each step. However, as we will see 
+below, there is a profound difference between the two methods. 
+
+\section{Comparing the explicit and implicit Euler methods on 
+the test ODE}
+Consider the following ODE, which we will refer to as the {\it 
+test ODE}:
+\begin{equation}\label{eq:test_ode}
+    \frac{du}{dt} = \lambda u, \quad u(0) = c, \quad t > 0.
+\end{equation}
+for some constant $\lambda \in \C$, we allow complex values since 
+this becomes important when we deal with systems. The solution 
+is simply given by $u(t) = c e^{\lambda t}$. Now let us solve 
+this ODE using our two methods. 
+
+
+The companion notebook for this lecture can be used to reproduce the 
+results in \Cref{fig:test_ode_forward_backward_euler_comparison}.
+Here we take $\lambda = -0.8 + 0.2i$ and $c = 1$. On the left column of 
+the figure we plot the analytic solution against the forward and backward Euler 
+solutions on the interval $[0, 10]$ with step size $\delta t = 0.5$. 
+We observe a gap between the numerical solutions 
+and the analytic one, this is expected since we are only solving the ODE approximately.
+ However, the solutions remain close to the analytic one and their qualitative behavior 
+ matches the truth. When using step size $\delta t = 2.2$ the picture changes 
+ significantly. The forward Euler solution exhibits large oscillations while 
+ the backward method seems to remain more or less {\it stable}. 
+ 
+ In the following lectures we will formalize this idea of stability for 
+ a numerical algorithm but the behavior seen in \Cref{fig:test_ode_forward_backward_euler_comparison} is prototypical for 
+ explicit and implicit numerical methods: {\it explicit methods are often cheaper 
+ per iteration but they can be unstable, whereas implicit methods are often 
+ more expensive but they tend to be more stable.}
+
+
+
+\begin{figure}[htp]
+    \includegraphics[width=0.48 \textwidth]{./Lectures/Lec3/test_ode_euler_dt0.5.png}
+     \includegraphics[width=0.48 \textwidth]{./Lectures/Lec3/test_ode_euler_dt2.2.png}
+    \caption{An example pair of numerical solutions of 
+    the test ODE \eqref{eq:test_ode} using the forward and backward Euler methods. 
+    Left column: We take $\delta t = 0.5$. Right column: We take $\delta t = 2.2$.}
+    \label{fig:test_ode_forward_backward_euler_comparison}
+\end{figure}
+
+
+
 
 
 \bibliographystyle{plainnat}

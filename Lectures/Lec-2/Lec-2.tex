@@ -1,66 +1,495 @@
 \chapter{Review of analytic methods for solving ODEs and PDEs}
 
+Here we recall analytic tricks used to solve ODEs and PDEs in closed form.
+These tricks only work for narrow, special classes of problems --
+which is precisely why the numerical methods developed throughout the
+rest of this course are needed -- but they remain indispensable:
+closed-form solutions are our main source of test problems for
+checking numerical algorithms, and several of the ideas below
+(eigen-decompositions, separation of variables, Fourier and Green's
+function ideas) reappear directly inside the numerical methods
+themselves. As before, this is a brief review; see the classic texts
+\cite{boyce2017elementary,strauss2007partial} for a much more detailed
+treatment.
+
 \section{Solving ODEs}
+
+Throughout this section we consider ODEs of the general form
+\eqref{eq:first_order_ode} or \eqref{eq:high_order_ode} from
+\Cref{ch:Lec1-intro}, together with the IVP and BVP framework of
+\Cref{def:ivp,def:bvp}.
 
 \subsection{General and particular solutions}
 
+An ODE of order $n$ typically has a \emph{general solution}: a family
+of solutions depending on $n$ arbitrary constants, one for each order
+of differentiation. Fixing the constants (e.g., by imposing initial or
+boundary conditions as in \Cref{def:ivp,def:bvp}) singles out one
+member of the family, called a \emph{particular solution}. We already
+saw an instance of this in \Cref{ex:harmonic_oscillator}: the general
+solution $u(t) = A\cos(\omega t) + B \sin(\omega t)$ of the harmonic
+oscillator becomes the particular solution
+\eqref{eq:harmonic_oscillator_solution} once we impose the initial
+condition $u(0) = u_0$, $u'(0) = v_0$.
+
+For \emph{linear} ODEs there is a very useful way to organize this
+search, based on the following superposition principle.
+
+\begin{proposition}[Structure of solutions to linear ODEs]
+    Consider a linear ODE $Lu = g$, where $L$ is a linear differential
+    operator (e.g., $Lu = u' + p(t) u$). If $u_p$ is any one particular
+    solution of $Lu=g$ and $u_h$ is the general solution of the
+    associated homogeneous equation $Lu=0$, then $u = u_h + u_p$ is the
+    general solution of $Lu=g$.
+\end{proposition}
+This reduces solving an inhomogeneous linear ODE to two separate, often
+easier, tasks: find the general homogeneous solution, and find just
+one particular solution of the full equation.
+
+\begin{example}
+    Consider $u' - u = e^{2t}$. The homogeneous equation $u'-u=0$ has
+    general solution $u_h(t) = Ce^t$. For a particular solution we
+    guess $u_p(t) = ae^{2t}$; substituting gives $2ae^{2t} - ae^{2t} =
+    e^{2t}$, so $a=1$. Hence the general solution is
+    \begin{equation*}
+        u(t) = Ce^t + e^{2t}.
+    \end{equation*}
+\end{example}
+
 \subsection{Separation of variables}
 
-\subsection{Integrating factors}
-multiple by some exponential so that the left hand side becomes a total derivative
+Separation of variables applies to first-order ODEs that can be
+written in the form
+\begin{equation*}
+    \frac{du}{dt} = f(t) g(u).
+\end{equation*}
+Formally separating the variables and integrating both sides,
+\begin{equation*}
+    \int \frac{du}{g(u)} = \int f(t) \, dt,
+\end{equation*}
+gives an implicit (and often explicit) relation between $u$ and $t$
+involving one arbitrary constant, which is then fixed by an initial
+condition.
 
+\begin{example}[Logistic growth]
+    Consider the logistic equation $du/dt = ku(1-u)$, which models,
+    e.g., a population growing toward a carrying capacity of $1$.
+    Separating variables and using partial fractions,
+    \begin{equation*}
+        \int \frac{du}{u(1-u)} = \int \left( \frac1u + \frac{1}{1-u}
+        \right) du = \ln \left| \frac{u}{1-u} \right| = kt + C.
+    \end{equation*}
+    Solving for $u$ and imposing $u(0) = u_0$ gives
+    \begin{equation*}
+        u(t) = \frac{u_0 e^{kt}}{1 - u_0 + u_0 e^{kt}},
+    \end{equation*}
+    which indeed satisfies $u(t) \to 1$ as $t \to \infty$ for any
+    $u_0 \in (0,1)$.
+\end{example}
+
+\subsection{Integrating factors}
+
+The integrating factor method solves general linear first-order ODEs
+\begin{equation*}
+    \frac{du}{dt} + p(t) u = q(t).
+\end{equation*}
+Multiplying both sides by $\mu(t) := \exp\left( \int p(t) \, dt
+\right)$ turns the left-hand side into a total derivative,
+$\frac{d}{dt}(\mu u) = \mu q$, i.e., we have multiplied by exactly the
+factor needed to make the left-hand side the derivative of a product.
+Integrating both sides then gives
+\begin{equation*}
+    u(t) = \frac{1}{\mu(t)} \left( \int \mu(t) q(t) \, dt + C \right).
+\end{equation*}
+
+\begin{example}[Newton's law of cooling]
+    An object at temperature $u(t)$ in an environment at constant
+    temperature $T_{\mathrm{env}}$ cools (or warms) at a rate
+    proportional to the temperature difference, $du/dt = -k(u -
+    T_{\mathrm{env}})$, i.e., $u' + ku = kT_{\mathrm{env}}$. The
+    integrating factor is $\mu(t) = e^{kt}$, and integrating
+    $\frac{d}{dt}(e^{kt}u) = kT_{\mathrm{env}} e^{kt}$ gives $e^{kt}
+    u(t) = T_{\mathrm{env}} e^{kt} + C$. Imposing $u(0) = u_0$ fixes
+    $C = u_0 - T_{\mathrm{env}}$, so
+    \begin{equation*}
+        u(t) = T_{\mathrm{env}} + (u_0 - T_{\mathrm{env}}) e^{-kt},
+    \end{equation*}
+    which decays exponentially toward $T_{\mathrm{env}}$, as expected.
+\end{example}
 
 \subsection{Exact solutions}
 
-Potentials etc
+An ODE written in the differential form
+\begin{equation*}
+    M(t,u) + N(t,u) \frac{du}{dt} = 0
+\end{equation*}
+is called \emph{exact} if $\partial M/\partial u = \partial N/\partial
+t$ (recall \Cref{lem:mixed-partials}). In that case there exists a
+potential function $\Psi(t,u)$ with $\partial \Psi/\partial t = M$ and
+$\partial \Psi/\partial u = N$, and the solution is given implicitly by
+the level sets $\Psi(t,u) = C$. The potential is found by integrating
+$M$ in $t$ (treating $u$ as a constant) and fixing the resulting
+integration ``constant'' (a function of $u$) by matching against $N$.
+
+\begin{example}
+    Consider $(2tu + 3) + (t^2-1) \dfrac{du}{dt} = 0$, so $M = 2tu+3$
+    and $N = t^2-1$. Since $\partial M/\partial u = 2t = \partial
+    N/\partial t$, the equation is exact. Integrating $M$ in $t$ gives
+    $\Psi(t,u) = t^2 u + 3t + h(u)$ for some function $h$; matching
+    $\partial \Psi/\partial u = t^2 + h'(u)$ with $N = t^2-1$ forces
+    $h(u) = -u$. Hence the solution is given implicitly by
+    \begin{equation*}
+        t^2 u + 3t - u = C.
+    \end{equation*}
+\end{example}
 
 \subsection{Substitutions}
 
-Change of variable to reduce to a solvable form
+Many nonlinear ODEs that are not directly separable, exact, or linear
+can be reduced to one of the previous cases by a clever change of
+variable. Two classic families are:
+\begin{itemize}
+    \item \emph{Homogeneous equations} $du/dt = F(u/t)$: the
+    substitution $v = u/t$ (so $u = tv$, $u' = v + tv'$) turns this
+    into the separable equation $t \, dv/dt = F(v) - v$.
+    \item \emph{Bernoulli equations} $u' + p(t) u = q(t) u^n$ for $n
+    \neq 0,1$: the substitution $v = u^{1-n}$ turns this into the
+    linear equation $v' + (1-n)p(t) v = (1-n) q(t)$, solvable by an
+    integrating factor.
+\end{itemize}
+
+\begin{example}
+    Consider the Bernoulli equation $u' - u = -u^2$ (a rewriting of the
+    logistic equation from above, with $n=2$). Substituting $v =
+    u^{-1}$, so $v' = -u^{-2} u'$, and dividing the original equation
+    by $-u^2$ gives $-u^{-2}u' + u^{-1} = 1$, i.e.,
+    \begin{equation*}
+        v' + v = 1,
+    \end{equation*}
+    a linear equation solvable by an integrating factor as in the
+    previous section.
+\end{example}
 
 \subsection{Transformations and series}
 
-\begin{itemize}
-    \item power series and Frobenius method
-    \item Laplace transform
-    \item Fourier transform
-    \item Fourier series
-    \item Green's functions
-\end{itemize}
+The following techniques all work by transforming the original ODE (or
+its solution) into a different representation in which the problem
+becomes algebraic or otherwise easier to solve.
+
+\paragraph{Power series and the Frobenius method.}
+If $u$ is expected to be analytic near $t=0$, we can posit a power
+series ansatz $u(t) = \sum_{n=0}^\infty a_n t^n$, substitute into the
+ODE, and match powers of $t$ to obtain a recurrence relation for the
+coefficients $a_n$.
+
+\begin{example}
+    For $u' = u$, writing $u = \sum_{n\ge0} a_n t^n$ gives $u' =
+    \sum_{n\ge1} n a_n t^{n-1} = \sum_{n\ge0} (n+1) a_{n+1} t^n$.
+    Matching this with $u = \sum_{n\ge0} a_n t^n$ term by term gives the
+    recurrence $a_{n+1} = a_n/(n+1)$, so $a_n = a_0/n!$ and $u(t) = a_0
+    \sum_{n\ge0} t^n/n! = a_0 e^t$, recovering the familiar solution.
+\end{example}
+When the ODE has a singular point (a coefficient vanishing at the
+expansion point), the plain power series ansatz above may fail to
+produce a solution; the Frobenius method generalizes it by allowing a
+leading factor $t^r$ for a possibly non-integer exponent $r$, and is
+the standard tool for equations such as Bessel's equation.
+
+\paragraph{Laplace transform.}
+The Laplace transform of $u$ is $U(s) := \mathcal{L}\{u\}(s) =
+\int_0^\infty e^{-st} u(t) \, dt$. Its key property is that it turns
+differentiation into multiplication: $\mathcal{L}\{u'\}(s) = sU(s) -
+u(0)$. Applying it to a linear ODE with constant coefficients turns it
+into an \emph{algebraic} equation for $U(s)$, which can be solved and
+then inverted (typically via a table of transforms) to recover $u(t)$.
+
+\begin{example}
+    For $u' + u = 0$, $u(0)=1$, taking the Laplace transform gives
+    $sU(s) - 1 + U(s) = 0$, so $U(s) = 1/(s+1)$, which we recognize as
+    the transform of $u(t) = e^{-t}$.
+\end{example}
+
+\paragraph{Fourier transform.}
+The Fourier transform $\hat u(\omega) := \int_{-\infty}^\infty u(x)
+e^{-i\omega x} \, dx$ plays a similar role but is most useful for
+problems posed on the whole real line (rather than $t \ge 0$), and
+turns differentiation in $x$ into multiplication by $i\omega$. We will
+use it below to solve the heat equation on the whole real line.
+
+\paragraph{Fourier series.}
+If instead $u$ is defined on a bounded interval, say $[0,L]$, we can
+expand it in the orthogonal basis of sines and cosines (or complex
+exponentials) with period related to $L$,
+\begin{equation*}
+    u(x) = \frac{a_0}{2} + \sum_{n=1}^\infty \left( a_n \cos\left(
+    \frac{2\pi n x}{L} \right) + b_n \sin\left( \frac{2\pi n x}{L}
+    \right) \right),
+\end{equation*}
+with the coefficients $a_n, b_n$ computed using the orthogonality of
+sines and cosines on $[0,L]$. We will see below that Fourier (sine or
+cosine) series arise naturally as eigenfunction expansions for PDEs
+with boundary conditions on $[0,L]$.
+
+\paragraph{Green's functions.}
+For a linear differential operator $L$ (in $t$, or in $\xb$ for a
+PDE), the Green's function $G$ solves $LG = \delta$, where $\delta$ is
+the Dirac delta ``function'' (an idealized unit impulse), together with
+the relevant boundary or initial conditions. By linearity, the solution
+of $Lu = f$ for a general right-hand side $f$ is then obtained by
+superposition,
+\begin{equation*}
+    u = \int G(\cdot, \tau) f(\tau) \, d\tau.
+\end{equation*}
+
+\begin{example}
+    \label{ex:greens-function-poisson}
+    Consider the 1D Poisson problem from \Cref{ex:poisson-bvp} with
+    homogeneous boundary conditions, $-u'' = f$ on $(0,1)$, $u(0) =
+    u(1) = 0$. Its Green's function is
+    \begin{equation*}
+        G(x,\xi) = \begin{cases}
+            x(1-\xi), & 0 \le x \le \xi, \\
+            \xi(1-x), & \xi \le x \le 1,
+        \end{cases}
+    \end{equation*}
+    which one can check directly solves $-\partial^2 G/\partial x^2 =
+    \delta(x-\xi)$ in $x$ (it is linear in $x$ on each side of $\xi$,
+    continuous, and has a unit jump in slope at $x=\xi$) along with the
+    boundary conditions. The solution of the general problem is then
+    $u(x) = \int_0^1 G(x,\xi) f(\xi) \, d\xi$.
+\end{example}
 
 \subsection{Solving systems}
 
-Eigenvalue decomposition, Jordan form, etc
+For linear systems with constant coefficients, $d\ub/dt = A\ub$ with
+$A \in \R^{d \times d}$ (a special case of \Cref{def:ivp}), the natural
+tool is the eigen-decomposition of $A$ reviewed in
+\Cref{ch:Lec0-linalg}. If $A$ is diagonalizable, $A = Q\Lambda
+Q^{-1}$, then the general solution is
+\begin{equation*}
+    \ub(t) = Qe^{\Lambda t} Q^{-1} \ub(0) = \sum_{j=1}^d c_j
+    e^{\lambda_j t} \qb_j,
+\end{equation*}
+where $\qb_j$ are the columns of $Q$ (the eigenvectors of $A$),
+$\lambda_j$ the corresponding eigenvalues, and $c_j$ the coefficients
+of $\ub(0)$ in the eigenvector basis; this follows directly from the
+matrix exponential identity reviewed in \Cref{ch:Lec-1-calculus}. When
+$A$ is not diagonalizable, one instead works with its Jordan form,
+which introduces extra polynomial-in-$t$ terms alongside the
+exponentials; we will not need the details of this construction in
+this course.
 
+\begin{example}
+    The harmonic oscillator \eqref{eq:mass_spring} can be written as
+    the first-order system $\ub' = A\ub$ with $\ub = (u,u')$, following
+    the standard trick of introducing the velocity as an auxiliary
+    variable (cf.\ \Cref{def:ivp}), where
+    \begin{equation*}
+        A = \begin{bmatrix} 0 & 1 \\ -\omega^2 & 0 \end{bmatrix}.
+    \end{equation*}
+    The eigenvalues of $A$ are $\lambda = \pm i\omega$ with eigenvectors
+    $\qb_\pm = (1, \pm i \omega)$, so the eigen-decomposition gives
+    solutions of the form $u(t) = c_+ e^{i\omega t} + c_- e^{-i\omega
+    t}$; taking real and imaginary parts (with $c_\pm$ complex
+    conjugates of each other, since $u$ is real-valued) recovers the
+    familiar solution \eqref{eq:harmonic_oscillator_solution} written
+    in terms of $\cos(\omega t)$ and $\sin(\omega t)$.
+\end{example}
 
 
 \section{Solving PDEs}
 
+We now turn to PDEs of the general form \eqref{eq:second_order_pde}
+from \Cref{ch:Lec1-intro}, and review a handful of classical techniques
+for solving them in special cases; see \cite{strauss2007partial} for a
+thorough treatment.
+
 \subsection{Dealing with boundary conditions}
+
+PDEs posed on a bounded domain $\Omega$ need boundary conditions on
+$\partial\Omega$ to be well-posed, just like the BVPs of
+\Cref{def:bvp}. The three classical types, using the normal derivative
+notation $\partial u/\partial n$ from
+\Cref{cor:greens-first-identity}, are:
+\begin{itemize}
+    \item \emph{Dirichlet}: $u = g$ on $\partial\Omega$, prescribing
+    the value of the solution itself (e.g., a fixed temperature, as in
+    \Cref{ex:heat_equation}).
+    \item \emph{Neumann}: $\partial u/\partial n = g$ on
+    $\partial\Omega$, prescribing the flux across the boundary (e.g.,
+    $g=0$ models a perfectly insulated boundary with no heat flux).
+    \item \emph{Robin (mixed)}: $au + b \, \partial u/\partial n = g$
+    on $\partial\Omega$ for constants $a,b$, a weighted combination of
+    the two (e.g., modeling heat loss proportional to the temperature
+    difference with the surroundings).
+\end{itemize}
+Different boundary conditions imposed on the same PDE can lead to very
+different solutions, so identifying the correct type from the physical
+(or other) context is an important first step in solving any PDE.
 
 \subsection{Reduction to ODEs}
 
-\begin{itemize}
-    \item Separation of variables
-    \item Similarity and self-similar solutions 
-    \item Eigenfunction expansions
-    \item Traveling waves
-\end{itemize}
+The following four ansatzes all work by reducing a PDE to one or more
+ODEs, which can then be attacked with the tools from the previous
+section.
+
+\paragraph{Separation of variables.}
+We look for solutions of the special product form $u(t,x) =
+T(t)X(x)$. Substituting into a linear PDE and dividing by $TX$
+typically separates the equation into two sides depending on different
+variables, which must therefore both equal the same separation
+constant, giving one ODE per variable.
+
+\begin{example}
+    \label{ex:heat-separation}
+    Consider the heat equation from \Cref{ex:heat_equation} with
+    $u(t,x) = T(t)X(x)$. Substituting into $u_t = \alpha u_{xx}$ and
+    dividing by $\alpha TX$ gives
+    \begin{equation*}
+        \frac{T'(t)}{\alpha T(t)} = \frac{X''(x)}{X(x)} = -\lambda,
+    \end{equation*}
+    for some constant $-\lambda$ (the sign is chosen for later
+    convenience), since the left side depends only on $t$ and the right
+    side only on $x$. This yields $T' = -\lambda \alpha T$ and $X'' =
+    -\lambda X$, together with the boundary conditions $X(0)=X(L)=0$
+    inherited from $u(t,0)=u(t,L)=0$. The latter is itself an
+    eigenvalue problem for $X$, with solutions
+    \begin{equation*}
+        X_n(x) = \sin\left( \frac{n\pi x}{L} \right), \qquad \lambda_n =
+        \left( \frac{n\pi}{L} \right)^2, \qquad n=1,2,\ldots,
+    \end{equation*}
+    and correspondingly $T_n(t) = e^{-\alpha \lambda_n t}$. Each
+    $u_n(t,x) = X_n(x)T_n(t)$ is called a separated solution; we
+    revisit this example below.
+\end{example}
+
+\paragraph{Similarity and self-similar solutions.}
+Instead of a product ansatz, we look for a solution that depends on
+the original variables only through a specific combination of them
+(the similarity variable), reducing the number of independent
+variables by one.
+
+\begin{example}
+    The heat equation $u_t = \alpha u_{xx}$ posed on all of $\R$
+    (rather than a bounded interval) admits the self-similar solution
+    \begin{equation*}
+        u(t,x) = \frac{1}{\sqrt{4\pi\alpha t}} \exp\left( -\frac{x^2}{4
+        \alpha t} \right), \qquad t > 0,
+    \end{equation*}
+    which depends on $(t,x)$ only through the similarity variable
+    $\eta = x/\sqrt{4\alpha t}$, up to an overall prefactor; one can
+    check directly by substitution that it solves the heat equation.
+    This particular solution is called the \emph{heat kernel}, and we
+    will see below that it plays the role of a Green's function for
+    the heat equation.
+\end{example}
+
+\paragraph{Eigenfunction expansions.}
+Separation of variables produces infinitely many separated solutions
+$u_n$, one for each eigenvalue. Since the PDE is linear, any
+(convergent) superposition $u = \sum_n c_n u_n$ is again a solution,
+and by choosing the coefficients $c_n$ appropriately we can match a
+prescribed initial (or boundary) condition that is not itself a single
+eigenfunction.
+
+\begin{example}
+    Returning to \Cref{ex:heat-separation}, the general solution of the
+    heat equation with zero Dirichlet boundary conditions is
+    \begin{equation*}
+        u(t,x) = \sum_{n=1}^\infty c_n \sin\left( \frac{n\pi x}{L}
+        \right) e^{-\alpha (n\pi/L)^2 t},
+    \end{equation*}
+    where the $c_n$ are exactly the Fourier sine series coefficients of
+    the initial condition $u_0(x) = u(0,x)$,
+    \begin{equation*}
+        c_n = \frac{2}{L} \int_0^L u_0(x) \sin\left( \frac{n\pi x}{L}
+        \right) dx.
+    \end{equation*}
+    This is the analytic solution of \Cref{ex:heat_equation}, and it is
+    instructive to compare it to the forward and backward Euler
+    approximations we computed there numerically.
+\end{example}
+
+\paragraph{Traveling waves.}
+We look for solutions of the form $u(t,x) = w(x-ct)$ for a wave speed
+$c$ and profile function $w$, which propagate at constant speed $c$
+without changing shape. Substituting this ansatz into the PDE and
+using the chain rule reduces it to an ODE for $w$ in the single
+variable $\xi = x-ct$.
+
+\begin{example}
+    The transport equation $u_t + cu_x = 0$ admits traveling wave
+    solutions $u(t,x) = w(x-ct)$ for \emph{any} differentiable profile
+    $w$: indeed $u_t = -cw'(x-ct)$ and $u_x = w'(x-ct)$, so $u_t + cu_x
+    = 0$ identically. In particular, $u(t,x) = u_0(x-ct)$ solves the
+    transport equation with initial condition $u(0,x) = u_0(x)$: the
+    initial profile is simply transported rigidly to the right at
+    speed $c$ (or to the left if $c<0$).
+\end{example}
 
 \subsection{Method of characteristics}
 
+The method of characteristics solves first-order PDEs of the form
+$u_t + c(t,x) u_x = f(t,x,u)$ by finding curves $(t,x(t))$ in the
+$(t,x)$-plane, called characteristics, along which the PDE reduces to
+an ODE in $t$ alone. Along a curve with $dx/dt = c(t,x)$, the chain
+rule gives
+\begin{equation*}
+    \frac{d}{dt} u(t,x(t)) = u_t + \frac{dx}{dt} u_x = u_t + c(t,x) u_x
+    = f(t,x(t),u(t,x(t))),
+\end{equation*}
+so $u$ along the characteristic solves the ODE $du/dt =
+f(t,x(t),u)$. Solving the characteristic ODE $dx/dt = c(t,x)$ together
+with this equation for $u$, and tracing back to $t=0$, gives the
+solution everywhere the characteristics are well defined.
 
+\begin{example}
+    Consider the variable-speed transport equation $u_t + xu_x = 0$,
+    $u(0,x) = u_0(x)$. The characteristics solve $dx/dt = x$, so $x(t)
+    = x_0 e^t$ where $x_0 = x(0)$, and $u$ is constant along each
+    characteristic since $f=0$. Solving for $x_0 = xe^{-t}$ and using
+    $u(t,x(t)) = u(0,x_0) = u_0(x_0)$ gives
+    \begin{equation*}
+        u(t,x) = u_0(xe^{-t}).
+    \end{equation*}
+\end{example}
 
 \subsection{Transformations}
 
-\begin{itemize}
-    \item Fourier
-    \item Laplace
-    \item Green's functions and fundamental solutions
-\end{itemize}
+The Fourier and Laplace transforms, as well as Green's functions,
+extend naturally from the ODE setting of the previous section to PDEs,
+by transforming only some of the independent variables.
 
+\paragraph{Fourier.}
+Taking the Fourier transform in $x$ of a PDE (leaving $t$
+untransformed) turns spatial derivatives into multiplication by powers
+of $i\omega$, reducing the PDE to a family of ODEs in $t$, one for each
+frequency $\omega$. For instance, Fourier transforming the heat
+equation $u_t = \alpha u_{xx}$ in $x$ gives $\hat u_t(t,\omega) =
+-\alpha \omega^2 \hat u(t,\omega)$, an ODE in $t$ for each fixed
+$\omega$ with solution $\hat u(t,\omega) = \hat u_0(\omega)
+e^{-\alpha\omega^2 t}$; inverting the transform recovers exactly the
+self-similar heat kernel solution seen above (convolved with the
+initial data $u_0$).
 
+\paragraph{Laplace.}
+Similarly, taking the Laplace transform in $t$ eliminates time
+derivatives (in favor of the initial data, via $\mathcal{L}\{u_t\} = sU
+- u_0$) and reduces the PDE to a boundary value problem in the spatial
+variable alone, for each value of the transform variable $s$; this is
+a common strategy for PDEs on semi-infinite time intervals.
 
+\paragraph{Green's functions and fundamental solutions.}
+The Green's function idea from the previous section also extends to
+PDEs: the \emph{fundamental solution} $\Phi$ of a linear PDE operator
+$L$ solves $L\Phi = \delta$ in free space (i.e., with no boundary, or
+with boundary conditions ``at infinity''), and the heat kernel from
+above is exactly the fundamental solution of the heat operator $L =
+\partial_t - \alpha \partial_x^2$. On a bounded domain with boundary
+conditions, the Green's function of
+\Cref{ex:greens-function-poisson} generalizes in the same way to PDE
+boundary value problems such as Poisson's equation in higher
+dimensions.
 
 \bibliographystyle{plainnat}
 \bibliography{references}

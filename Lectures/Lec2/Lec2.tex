@@ -1,6 +1,145 @@
 \chapter{IVPs and BVPs}
 
+Our entry point into the study of algorithms for solving differential 
+equations (DEs) is two types of ODEs,i.e., initial value problems (IVPs) and boundary value problems (BVPs). Let us describe these for an example ODE: 
+\begin{equation*}
+    \frac{d^2 u}{dt^2} + u = 0.
+\end{equation*}
+By itself this ODE is not well-posed since it may have infinitely 
+many solutions. In fact, any function of the form 
+\begin{equation*}
+    u(t) = A \cos(t) + B \sin(t),
+\end{equation*}
+with arbitrary constants $A$ and $B$ 
+is a solution; simply plug it into the ODE to verify. So we need additional 
+side information to uniquely determine a solution. This is where 
+the difference between IVPs and BVPs arises: 
+
+\begin{itemize}
+    \item In an IVP the additional data is provided at a fixed 
+    point in time, typically at the initial time $t_0$. 
+    For example, for our ODE, an IVP could be specified as
+    \begin{equation*}
+        u(0) = u_0, \quad \frac{du}{dt}(0) = v_0,
+    \end{equation*}
+    where $u_0$ and $v_0$ are given constants and we took $t_0 = 0$. In this case, the 
+    solution is  
+    \begin{equation*}
+        u(t) = u_0 \cos(t) + v_0 \sin(t). 
+    \end{equation*}
+
+    \item In a BVP the additional data is provided at the "boundaries"
+     of a domain, typically at two different points in time, 
+     say $t_0$ and $t_1$. 
+    For our ODE, a BVP could be specified as
+    \begin{equation*}
+        u(0) = u_0, \quad u(\pi/2) = u_1,
+    \end{equation*}
+    where $u_0$ and $u_1$ are given constants and we took $t_0 = 0$ 
+    and $t_1 = \pi/2$. In this case, the 
+    solution must satisfy the boundary conditions at 
+    both $t_0$ and $t_1$ and so we obtain 
+    \begin{equation*}
+        u(t) = u_0 \cos(t) + u_1 \sin(t).
+       \end{equation*}
+\end{itemize}
+
+We readily notice a difference between the two problems. The IVP with 
+the above initial conditions (think initial location and velocity) always 
+has a unique solution, i.e., we can find $A$ and $B$ via the formulae: 
+\begin{equation*}
+    A = u_0, \quad B = v_0.
+\end{equation*}
+On the other hand, the BVP may have infinitely many solutions or
+may have no solutions at all.
+For instance, consider the boundary data
+    \begin{equation*}
+        u(0) = c_1, \quad u(\pi) = c_2.
+    \end{equation*}
+    If we take $c_1 = c_2 = 0$, then the problem has infinitely many 
+    solutions of the form $u(t) = B \sin(t)$. 
+    At the same time, if $c_1 \neq 0$ and $c_2 \neq -c_1$ then 
+    the BVP has no solution. To see this observe that the 
+    coefficients $A$, $B$ are given by solving the linear 
+    system 
+    \begin{equation*}
+        \begin{bmatrix}
+            1 & 0 \\
+            -1 & 0
+        \end{bmatrix}
+        \begin{bmatrix}
+            A \\
+            B
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+            c_1 \\
+            c_2
+        \end{bmatrix}
+    \end{equation*}
+
+The above example shows the intuitive difference between IVPs 
+and BVPs: We think of IVPs as dynamic problems where the solution is 
+obtained by starting with initial data and marching forward in time. 
+In contrast, BVPs are more like static problems where the solution must satisfy conditions at multiple points, and there is no inherent direction of "marching" in time.
+
+\begin{definition}[IVP]
+    \label{def:ivp}
+    The general form of an IVP is a system of ODEs of the form 
+    \begin{equation*}
+        \frac{d\ub}{dt} = \fb(t, \ub), 
+        \quad \ub(t_0) = \ub_0,
+    \end{equation*}
+    where $\ub: [t_0, t_1] \to \R^d$ is the unknown vector-valued 
+    solution, $\fb: [t_0, t_1] \times \R^d \to \R^d$ is the right hand side, 
+    and $\ub_0 \in \R^d$ is the given initial condition.
+\end{definition}
+All of our examples from \Cref{ch:Lec1-intro} fall into the IVP category. 
+Note that this ODE is only first order, but this model covers 
+higher order ODEs via the usual trick of introducing 
+auxiliary variables to reduce a high order ODE to a 
+first order system. In other words, given 
+\begin{equation*}
+    \frac{d^n u}{dt^n} = 
+    f\left(t, u, \frac{du}{dt}, \ldots, \frac{d^{n-1} u}{dt^{n-1}}\right), 
+\end{equation*}
+define the auxiliary variables
+\begin{equation*}
+    u_1 = u, \quad u_2 = \frac{du}{dt}, \quad \ldots, \quad u_n = \frac{d^{n-1} u}{dt^{n-1}}.
+\end{equation*}
+Then we can rewrite the original $n$-th order ODE as a first order system:
+\begin{equation*}
+    \frac{d}{dt} \begin{bmatrix} u_1 \\ u_2 \\ \vdots \\ u_n \end{bmatrix}
+    = \begin{bmatrix} u_2 \\ u_3 \\ \vdots \\ f(t, u_1, u_2, \ldots, u_n) \end{bmatrix}.
+\end{equation*}.
+
+\begin{definition}[BVP]
+\label{def:bvp}
+    The general form of a BVP is a system of ODEs of the form 
+    \begin{equation*}
+        \frac{d\ub}{dt} = \fb(t, \ub), 
+        \quad \gb(\ub(t_0), \ub(t_1)) = \mathbf{0},
+    \end{equation*}
+    where $\ub: [t_0, t_1] \to \R^d$ is the unknown vector-valued 
+    solution, $\fb: [t_0, t_1] \times \R^d \to \R^d$ is the right hand side, 
+    and $\gb: \R^d \times \R^d \to \R^d$ specifies the boundary conditions at $t_0$ and $t_1$.
+\end{definition}
+
+\begin{example}\label{ex:poisson-bvp}
+    Perhaps the most well-studied example of a BVP is the Poisson's 
+    equation 
+    \begin{equation*}
+        - \frac{d^2 u}{dx^2} = f(x), \quad x \in (0,1), 
+        \quad u(0) = u_0, \; u(1) = u_1.
+    \end{equation*}
+    This is a second order ODE that describes the potential field $u$ 
+    caused by a electric charge distribution $f(x)$ with 
+    with Dirichlet boundary conditions specified at $x=0$ and $x=1$.
+    It also describes many other physical phenomena such as 
+    heat conduction in one-dimensional rods and the deflection of elastic 
+    beams under load.
+\end{example}
 
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}
