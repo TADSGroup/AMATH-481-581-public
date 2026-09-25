@@ -98,24 +98,24 @@ for $n = 0, 1, \dots, N$.
 We often refer to the points 
 $t_n$ as the {\it discrete time points} or {\it time mesh points}
 or {\it time grid points}. 
-We will also write $\delta t_n = t_{n+1} - t_n$
+We will also write $\Delta t_n = t_{n+1} - t_n$
 to denote the {\it time step} between consecutive time points also called 
-{\it step size}. For simplicty let us assume that $\delta t_n 
-= \delta t$ for all $n = 0, 1, \dots, N-1$, i.e., the time steps are 
+{\it step size}. For simplicty let us assume that $\Delta t_n 
+= \Delta t$ for all $n = 0, 1, \dots, N-1$, i.e., the time steps are 
 constant. Such a mesh is called a {\it uniform mesh}.
 
 Recalling Taylor's theorem, we can write 
 \begin{equation*}
     \begin{aligned}
-            u(t_{n+1}) & = u(t_n) + \frac{du}{dt}(t_n) \delta t + 
-    \mathcal{O}(\delta t^2) \\
-    & = u(t_n) + f(t_n, u(t_n)) \delta t + \mathcal{O}(\delta t^2) 
+            u(t_{n+1}) & = u(t_n) + \frac{du}{dt}(t_n) \Delta t + 
+    \mathcal{O}(\Delta t^2) \\
+    & = u(t_n) + f(t_n, u(t_n)) \Delta t + \mathcal{O}(\Delta t^2) 
     \end{aligned}
 \end{equation*}
-Throwing away the error $\mathcal{O}(\delta t^2)$, 
+Throwing away the error $\mathcal{O}(\Delta t^2)$, 
 we obtain the explicit formula:
 \begin{equation}\label{eq:explicit_euler}
-    u_{n+1} = u_n + f(t_n, u_n) \delta t, \quad n = 1, \dots, N-1, 
+    u_{n+1} = u_n + f(t_n, u_n) \Delta t, \quad n = 1, \dots, N-1, 
     \quad u_0 = c.
 \end{equation}
 This formula is known as the explicit Euler method. Notice its simplicity: 
@@ -126,7 +126,7 @@ intuition for "marching forward in time".
 Also observe that we can rewrite the explicit Euler method 
 in the more faithful form: 
 \begin{equation*}
-    \frac{u_{n+1} - u_n}{\delta t} = f(t_n, u_n),
+    \frac{u_{n+1} - u_n}{\Delta t} = f(t_n, u_n),
 \end{equation*}
 which reveals the method was obtained using a simple approximation of 
 the time derivative $\frac{d u}{dt}$. But, this observation 
@@ -138,14 +138,14 @@ but this time using the Taylor expansion based at $t_{n+1}$ rather
 than $t_n$: 
 \begin{equation*}
     \begin{aligned}
-    u(t_n) & = u(t_{n+1}) - \frac{du}{dt}(t_{n+1}) \delta t + 
-    \mathcal{O}(\delta t^2) \\
-    & = u(t_{n+1}) - f(t_{n+1}, u(t_{n+1})) \delta t + \mathcal{O}(\delta t^2)
+    u(t_n) & = u(t_{n+1}) - \frac{du}{dt}(t_{n+1}) \Delta t + 
+    \mathcal{O}(\Delta t^2) \\
+    & = u(t_{n+1}) - f(t_{n+1}, u(t_{n+1})) \Delta t + \mathcal{O}(\Delta t^2)
     \end{aligned}
 \end{equation*}
 Once again throw away the error term to obtain 
 \begin{equation*}
-    u_{n+1}  = u_{n} + f(t_{n+1}, u_{n+1}) \delta t, \quad n = 0, \dots, N-1, 
+    u_{n+1}  = u_{n} + f(t_{n+1}, u_{n+1}) \Delta t, \quad n = 0, \dots, N-1, 
     \quad u_0 = c.
 \end{equation*}
 Notice that this equation now describes $u_{n+1}$ implicitly 
@@ -153,7 +153,7 @@ in terms of $u_n$ at each step, hence it is known as the
 {\it implicit Euler method.}
 It's faithful form is 
 \begin{equation*}
-    \frac{u_{n+1} - u_n}{\delta t} = f(t_{n+1}, u_{n+1}). 
+    \frac{u_{n+1} - u_n}{\Delta t} = f(t_{n+1}, u_{n+1}). 
 \end{equation*}
 At this point it seems that the explicit and implicit Euler schemes are 
 only slightly different with the implicit scheme being less convenient 
@@ -178,11 +178,11 @@ The companion notebook for this lecture can be used to reproduce the
 results in \Cref{fig:test_ode_forward_backward_euler_comparison}.
 Here we take $\lambda = -0.8 + 0.2i$ and $c = 1$. On the left column of 
 the figure we plot the analytic solution against the forward and backward Euler 
-solutions on the interval $[0, 10]$ with step size $\delta t = 0.5$. 
-We observe a gap between the numerical solutions 
+the figure we plot the analytic solution against the forward and backward Euler 
+solutions on the interval $[0, 10]$ with step size $\Delta t = 0.5$. 
 and the analytic one, this is expected since we are only solving the ODE approximately.
  However, the solutions remain close to the analytic one and their qualitative behavior 
- matches the truth. When using step size $\delta t = 2.2$ the picture changes 
+ matches the truth. When using step size $\Delta t = 2.2$ the picture changes 
  significantly. The forward Euler solution exhibits large oscillations while 
  the backward method seems to remain more or less {\it stable}. 
  
@@ -199,7 +199,7 @@ and the analytic one, this is expected since we are only solving the ODE approxi
      \includegraphics[width=0.48 \textwidth]{./Lectures/Lec3/test_ode_euler_dt2.2.png}
     \caption{An example pair of numerical solutions of 
     the test ODE \eqref{eq:test_ode} using the forward and backward Euler methods. 
-    Left column: We take $\delta t = 0.5$. Right column: We take $\delta t = 2.2$.}
+    Left column: We take $\Delta t = 0.5$. Right column: We take $\Delta t = 2.2$.}
     \label{fig:test_ode_forward_backward_euler_comparison}
 \end{figure}
 

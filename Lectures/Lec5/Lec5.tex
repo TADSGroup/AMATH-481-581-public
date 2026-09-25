@@ -1,7 +1,49 @@
 \chapter{On accuracy and stability}
 
+So far we have discussed various practical aspects of the forward and backward 
+Euler methods and applied them to solve systems of ODEs. However, we 
+have noticed various pecular things about these algorithms. 
+For example, in \Cref{fig:test_ode_forward_backward_euler_comparison} we 
+saw that the numerical solutions deviated from the true solution of 
+the test ODE. In fact, in some regimes the forward Euler solution 
+became unstable while the backward method remained stable. 
+We will now dig deeper into these ideas starting with 
+the concept of numerical accuracy. 
 
-definitions and examples for numerical algorithms
+\section{Numerical accuracy}
+
+When working with ODEs we typically consider two types of errors: 
+a global error and a local truncation error.
+Let us consider scalar ODEs. Then the global error is 
+simply the difference between the true solution and 
+the numerical solution at a given time step, i.e., 
+\begin{equation}\label{def:global_error}
+    e_n = u(t_n) - u_n, \qquad n = 1, 2, \dots,
+\end{equation}
+Naturally you would consider $|e_n|$ as a measure of the error at each time step
+since the sign of the error is often less important than its magnitude.
+The truncation error, on the other hand, measures the error 
+introduced by the numerical scheme in a single step. For example, 
+let us consider the forward Euler method. Then the local truncation 
+error at step $n$ takes the form 
+\begin{equation}\label{def:local_truncation_error}
+    \tau_n = \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(u(t_{n-1})) 
+    =: \mcl{N}_{\Delta t}[u(t_n)], 
+    \qquad n =  1, 2, \dots,
+\end{equation}
+that is, the residual of the discretized ODE  after 
+plugging in the true solution $u(t_n)$. 
+
+
+\subsection{Measuring accuracy and its order}
+
+\subsection{Modifying forward Euler to obtain second order accuracy}
+
+\section{Numerical stability}
+
+\subsection{Definition of stability}
+
+
 
 \bibliographystyle{plainnat}
 \bibliography{references}
