@@ -1,4 +1,5 @@
 \chapter{Extension to nonlinear systems of ODEs}
+\label{Lec:extension_nonlinear_odes}
 
 In the last lecture we introduced the forward and backward Euler schemes 
 and applied them to solve the test ODE to get a sense for the accuracy and stability of these methods. In this lecture we will continue along this path by discussing some 
@@ -106,9 +107,9 @@ With the nonlinear instances of Euler's method established we can now solve
 larger faimilies of ODE problems. As an example we consider Stefan's ice-growth 
 law that describes the thickness of ice as it grows over a large 
 body of water \cite{lepparanta1993review}:
-\begin{equation*}
+\begin{equation}\label{eq:stefan-ice-growth}
     \frac{d u}{d t} = \frac{D}{u}, \qquad u(0) = c,
-\end{equation*}
+\end{equation}
 where $D$ is a positive constant representing the effective thermal diffusivity of ice 
 and $u$ represents the thickness of the ice layer. This problem has an 
 analytic solution after observing that the ODE is of the form 

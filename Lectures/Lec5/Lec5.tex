@@ -8,11 +8,63 @@ saw that the numerical solutions deviated from the true solution of
 the test ODE. In fact, in some regimes the forward Euler solution 
 became unstable while the backward method remained stable. 
 We will now dig deeper into these ideas starting with 
-the concept of numerical accuracy. 
+the concepts of convergence and numerical accuracy. 
+
+\section{Convergence}
+
+Convergence of a numerical method often refers to the property that 
+as the {\it resolution} or {\it capacity} of the model increases then 
+the numerical solution converges to the true solution of the problem. 
+In case of ODEs, this often takes the following form. 
+
+\begin{definition}[Convergence of an ODE solver]
+    Consider an ODE with a ground truth solution $u: [0, T] \mapsto \R$ and 
+    an ODE solver that, for an integer $N$, produces a numerical solution 
+    $u_n \approx u(t_n)$ at time $t_n = n \Delta t$ for $n =0, 1, \dots, N$
+    and with $\Delta t = T /N$. Then we say that the method is  
+    {\it convergent} if
+    \begin{equation}
+        \lim_{\Delta t \to 0} \max_{0 \le n \le N} |u(t_n) - u_n| = 0.
+    \end{equation}
+\end{definition}
+
+Notice that one can always adjust this definition for different purposes. For 
+example if we care only about the solution at the final time $T$, we could ask 
+for $\lim_{\Delta t \to 0} |u(T) - u_N| = 0$. Also note that the 
+notion of convergence somehow depends on the ground truth solution $u$ as well
+and we need, at the very least, that solution to be well-defined. 
+
+Empirically, numerical convergence often looks like "the numerical solution 
+approaching the true solution", as we make $\Delta t$ smaller. For our 
+test ODE with forward Euler, we may obtain the following results (we 
+use a scalar $\lambda$ here for simplicity.)
+
+\begin{figure}
+    \includegraphics[width=0.32\textwidth]{./Lectures/Lec5/test_ode_convergence_solution.png}
+    \includegraphics[width=0.32\textwidth]{./Lectures/Lec5/test_ode_convergence_error.png}
+    \includegraphics[width=0.32\textwidth]{./Lectures/Lec5/test_ode_convergence_error_semilogy.png}
+    
+    \caption{An instance of numerical convergence for the 
+    forward Euler method on the test ODE.  
+    On the left panel we plot the numerical solutions against the true solution. Notice 
+    how the curves approach the truth. In the middle we plot the numerical 
+    erros $| u(t_n) - u_n |$. Notice as $\Delta t$ becomes smaller the overall 
+    errors also become smaller. On the right we plot the errors in the semilog scale. 
+    Since numerical erros are often small we routinely use log-scale plots for better visualization.}
+    \label{fig:test_ode_convergence}
+
+\end{figure}
+
 
 \section{Numerical accuracy}
 
-When working with ODEs we typically consider two types of errors: 
+While convergence is an important property of a an algorithm, 
+indeed without it the algorithm is mostly useless, we often 
+would like to understand more about the algorithm. 
+In particular, we would like to know how fast the method 
+converges and essentially how accurate it is. 
+
+When working with ODE solvers we typically consider two types of errors: 
 a global error and a local truncation error.
 Let us consider scalar ODEs. Then the global error is 
 simply the difference between the true solution and 
@@ -20,6 +72,8 @@ the numerical solution at a given time step, i.e.,
 \begin{equation}\label{def:global_error}
     e_n = u(t_n) - u_n, \qquad n = 1, 2, \dots,
 \end{equation}
+We already plotted the magnitude of this quantitiy in 
+\Cref{fig:test_ode_convergence}.
 Naturally you would consider $|e_n|$ as a measure of the error at each time step
 since the sign of the error is often less important than its magnitude.
 The truncation error, on the other hand, measures the error 
@@ -28,20 +82,310 @@ let us consider the forward Euler method. Then the local truncation
 error at step $n$ takes the form 
 \begin{equation}\label{def:local_truncation_error}
     \tau_n = \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(u(t_{n-1})) 
-    =: \mcl{N}_{\Delta t}[u(t_n)], 
+    =: \mcl{N}^{\text{FE}}_{\Delta t}[u(t_n)], 
     \qquad n =  1, 2, \dots,
 \end{equation}
 that is, the residual of the discretized ODE  after 
-plugging in the true solution $u(t_n)$. 
+plugging in the true solution $u(t_n)$. It turns out that 
+we can write any local truncation error in a similar form for 
+other numerical schemes as well, for example for backward Euler 
+we have 
+\begin{equation*}
+    \mcl{N}^{\text{BE}}_{\Delta t}[u(t_n)] 
+    := \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(u(t_{n})).
+\end{equation*}
+So we now think of the global and local truncation errors 
+in a unified framework for arbitrary ODE solvers and 
+the rest of our discussion below holds in this generality. 
+But if you would like a concrete example to ground your reading 
+just keep the forward Euler scheme in mind. 
 
 
-\subsection{Measuring accuracy and its order}
+It turns out, as 
+we will see shortly, that the local truncation error of a numerical 
+scheme  is closely related to the global error. 
 
-\subsection{Modifying forward Euler to obtain second order accuracy}
 
-\section{Numerical stability}
+\subsection{Order of accuracy and convergence} 
+Following the parlance of \cite{ascher}, we say that a 
+numerical method is {\it accurate (or  consistent )
+ of order $p$} if the local truncation error satisfies 
+ \begin{equation*}
+    \tau_n = \mcl{O}(\Delta t^p), \qquad n = 1, 2, \dots,
+ \end{equation*}
+ where we recall the {\it big-O} notation from 
+ \Cref{def:big_o}. We further say that the method is 
+ {\it convergent of order $p$} if 
+ \begin{equation*}
+    e_n = \mcl{O}(\Delta t^p), \qquad n = 1, 2, \dots.
+ \end{equation*}
+ It is often easy to control the local truncation erros and 
+ verify order of accuracy of an algorithm. 
+ 
+ \begin{example}\label{ex:euler_first_order_accuracy}    
+  For both forward and 
+ backward Euler methods we can use Taylor expansions to 
+ directly verify that 
+ \begin{equation*}
+    \tau_n = \frac{\Delta t}{2} u''(t_n) + \mcl{O}(\Delta t^2).
+ \end{equation*}
+ which shows that both methods are accurate (or consistent) 
+ of order 1.
+\end{example}
 
-\subsection{Definition of stability}
+\begin{example}\label{ex:trapezoid-method}
+As an alternative to the forward and backward 
+Euler methods we now consider the (symmetric) trapezoid method 
+which simply takes the form 
+\begin{equation}\label{eq:trapezoid-method}
+\frac{u_{n} - u_{n-1}}{\Delta t} 
+= \frac{1}{2} \Big( f(t_{n-1}, u_{n-1}) + f(t_n, u_n) \Big).
+\end{equation}
+Note that this is an implicit method since $f(t_n, u_n)$ 
+appears on the right hand side.
+Using Taylor expansions
+centered at the mid point $t_{n - 1/2} = \frac{1}{2} (t_n + t_{n-1})$
+we can write 
+\begin{equation*}
+\begin{aligned}
+    u(t_n) & = u(t_{n - 1/2}) + \frac{\Delta t}{2} 
+    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
+    + \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
+    + \mcl{O}(\Delta t^4),\\
+    u(t_{n-1}) &= u(t_{n - 1/2}) - \frac{\Delta t}{2} 
+    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
+    - \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
+    + \mcl{O}(\Delta t^4).
+\end{aligned}
+\end{equation*}
+Hence, we have the identity
+\begin{equation*}
+    \frac{u(t_n) - u(t_{n-1})}{\Delta t} 
+    =  u'(t_{n-1/2})  + \frac{\Delta t^2}{24} u''(t_{n - 1/2}) 
+    + \mcl{O}(\Delta t^4)
+\end{equation*}
+Using the same Taylor expansions for $u'$ we can write 
+\begin{equation*}
+\begin{aligned}
+    u'(t_{n-1/2}) & = u'(t_{n}) - \frac{\Delta t}{2} u''(t_{n}) + \frac{(\Delta t)^2}{8} u'''(t_{n}) + \mcl{O}(\Delta t^3),\\
+    u'(t_{n-1/2}) & = u'(t_{n-1}) + \frac{\Delta t}{2} u''(t_{n-1}) + \frac{(\Delta t)^2}{8} u'''(t_{n-1}) + \mcl{O}(\Delta t^3)
+\end{aligned}
+\end{equation*}
+and so 
+\begin{equation*}
+    u'(t_{n - 1/2}) = \frac{1}{2} (u'(t_n) + u'(t_{n-1}))
+     + \frac{\Delta t^2}{8} (u'''(t_n) + u'''(t_{n-1})) + \mcl{O}(\Delta t^3).
+\end{equation*}
+Substituting this into our update rule we see that the 
+Trapezoid method is indeed second order accurate:
+\begin{equation*}
+    \frac{u_{n} - u_{n-1}}{\Delta t} 
+    = \frac{1}{2} \Big( f(u_{n-1}) + f(u_n) \Big) 
+    + \mcl{O}(\Delta t^2).
+\end{equation*}
+\end{example}
+The above machinery is widely useful when computing the order 
+of accuracy of various numerical schemes. However, obtaining 
+the order of convergence, i.e., showing that the global error 
+is $\mcl{O}(\Delta t^p)$ is often more challenging. 
+
+To see the connection between local truncation errors 
+and global errors consider the very first step of forward 
+Euler: 
+\begin{equation*}
+    u_1 = u_0 + \Delta t f(t_0, u_0).
+\end{equation*}
+Then $e_1 = u(t_1) - u_1 = \Delta t \tau_1$ since $u_0 = u(0)$ is exact. 
+Then in the next time step we have 
+\begin{equation*}
+    \begin{aligned}
+    u_2 & = u_1 + \Delta t f(t_1, u_1) \\
+        & = u(t_1) + \Delta t f(t_1, u(t_1)) +
+        \Big(u_1 - u(t_1)\Big) + \Delta t 
+        \Big( f(t_1, u_1) - f(t_1, u(t_1)) \Big).
+    \end{aligned}
+\end{equation*}
+And so 
+\begin{equation*}
+    e_2 = u(t_2) - u_2 = \Delta t \; \tau_2 + \Big( \Delta t \; \tau_1 + \Delta t 
+        \Big( f(t_1, u_1) - f(t_1, u(t_1)) \Big) \Big).
+\end{equation*}
+Indeed, this line of thinking gives us a ruccurence relation of 
+the global error: 
+\begin{equation*}
+    u(t_n) - u(t_{n-1}) - \Delta t f(t_{n-1}, u(t_{n-1})) 
+    = \Delta t \tau_n,
+\end{equation*}
+at the same time, 
+\begin{equation*}
+    u_n - u_{n-1} - \Delta t f(t_{n-1}, u_{n-1}) = 0,
+\end{equation*}    
+subtracting the second equation from the first gives
+\begin{equation*}
+    \begin{aligned}
+        u(t_n) - u_n & = u(t_{n-1}) - u_{n-1} + 
+        \Delta t 
+        \Big( f(t_{n-1}, u(t_{n-1})) - f(t_{n-1}, u_{n-1}) \Big)
+        + \Delta t \tau_n \\ 
+        e_n & = e_{n-1} + \Delta t 
+        \Big( f(t_{n-1}, u(t_{n-1})) - f(t_{n-1}, u_{n-1}) \Big) 
+        + \Delta t \tau_n.
+    \end{aligned}
+\end{equation*}
+Now suppose that $f$ is Lipschitz in its second argument with 
+a constant $L > 0$, then $|f(t, u) - f(t, v)| \le L |u - v|$ for all $t$ and all $u, v$.
+So we obtain 
+\begin{equation*}
+    |e_n| \le (1 + \Delta t L) |e_{n-1}| + \Delta t |\tau_n|.
+\end{equation*}
+Further suppose that $\sup_{t \in [0, T]} |u''(t)| \le M$ for 
+some constant $M > 0$ which in turn implies $|\tau_n| 
+\le \frac{M}{2} \Delta t.$ Then our global error bound 
+takes the form 
+\begin{equation*}
+    \begin{aligned}
+            |e_n| & \le (1 + \Delta t L) |e_{n-1}| + \frac{M}{2} (\Delta t)^2 \\
+    & \le (1 + \Delta t L)^n |e_0| + 
+    \frac{M}{2} (\Delta t)^2 \sum_{k=0}^{n-1} (1 + \Delta t L)^k.
+    \end{aligned}
+\end{equation*}
+Where in the last display we used the fact that $e_0 = u(0) - u_0 = 0$.
+Using the formula for the sum of a geometric series, 
+$\sum_{k=0}^K a r^k = a \frac{1 - r^{K+1}}{1 - r}.$, 
+we can further simplify the bound as
+\begin{equation*}
+    |e_n| \le \frac{M}{2} (\Delta t)^2 \frac{(1 + \Delta t L)^n - 1}{\Delta t L}.
+\end{equation*}
+Finally, since $(1 + a) \le e^a$ we have that 
+$(1 + \Delta t L) \le e^{\Delta t L}$ and so 
+$(1 + \Delta t L)^n \le e^{n \Delta t L} = e^{T L}$. Thus 
+our error bound simplifies to 
+\begin{equation*}
+    |e_n| \le \frac{M}{2} (\Delta t)^2 \frac{e^{T L} - 1}{\Delta t L} = \frac{M}{2} \frac{\Delta t (e^{T L} - 1)}{L} = \mcl{O}(\Delta t).
+\end{equation*}
+So forward Euler is consistent of order one under the 
+assumptions we made along the way. 
+
+
+\subsection{Consistency + stability = convergence}
+The important intuition in our calculations above is the 
+fact that the global error seems to be of the same order as 
+our local truncation error. While the proof above is 
+specific to the forward Euler method, a fundamental theorem 
+in numerical analysis tells us that this property is 
+inherited by larger families of algorithms. To state the 
+theorem we need a quick definition. 
+
+\begin{definition}[0-stability]
+    Consider a numerical ODE solver with a difference operator 
+    $\mcl{N}_{\Delta t}$. We say the method is $0$-stable 
+    if there exist constants $C, h_0 >0$ 
+    independent of $\Delta t$ 
+    such that
+    for all $\Delta t \le h_0$ and 
+     any two sequences $\{v_n\}_{n=1}^N$ and 
+    $\{w_n\}_{n=1}^N$  
+    we have the bound 
+    \begin{equation*}
+        |v_n - w_n| \le C \Big[ | v_0 - w_0| 
+        + \max_{1 \le j \le n} \left| \mcl{N}_{\Delta t}[v_{j-1}] - 
+        \mcl{N}_{\Delta t}[w_{j-1}] \right| \Big].
+    \end{equation*}
+\end{definition}
+If we think of $v_n$ and $w_n$ as two numerical solutions 
+to our ODE then $0$-stability says that for small enough $\Delta t$ 
+the difference between the two numerical solutions 
+remains bounded in terms of the initial conditions as well as 
+the perturbations introduced by 
+applying the difference operator $\mcl{N}_{\Delta t}$. The "0" in 
+the $0$-stability terminology refers to the fact that we 
+require $\Delta t$ to be sufficiently small, hence it is 
+often considered to be a notion of stability in the
+limit $\Delta t \to 0$.
+
+With this definition at hand, we obtain the following fundamental 
+theorem which is known as the Lax equivalence theorem due to 
+Peter Lax. 
+
+\begin{theorem}\label{thm:lax-equivalence}
+    A numerical method that is consistent and $0$-stable 
+    is also convergent. In fact, if the method is 
+    consistent of order $p$ then it is also convergent 
+    of order $p$.
+\end{theorem}
+
+\begin{proof}
+    Take the sequences $v_n = u(t_n)$ and $ w_n = u_n$ produced 
+    by our numerical scheme. Then substituting in the 
+    definition of $0$-stability, we obtain 
+    \begin{equation*}
+        \begin{aligned}
+        |e_n| & \le C \Big[ e_0 + \max_{1 \le j \le n} | \mcl{N}_{\Delta t}[u(t_{j-1})] - 
+        \mcl{N}_{\Delta t}[u_{j-1}]| \Big] \\ 
+        & \le C \max_{1 \le j \le n} | \tau_j | = \mcl{O}(\Delta t^p).
+        \end{aligned}
+    \end{equation*}
+\end{proof}
+The proof of this result is simple which implies that most of 
+the work in showing the order of convergence of a method 
+has to go into verifying its conditions. Namely, for any 
+other method you have to first obtain a bound on the 
+local truncation errors $\tau_n$ and then prove that the 
+resulting difference operator $\mcl{N}_{\Delta t}$ is $0$-stable. 
+For both of these steps we often rely heavily on Taylor expansions 
+as well as additional smoothness assumptions as we 
+did in the forward Euler example. 
+
+\section{Empirical validation of the order of convergence}
+
+While the theoretical analysis provides a rigorous foundation 
+for the behavior of errors it is important that we ask how 
+these theoretical predictions manifest in practice and 
+how can we tell if a method is indeed of a particular order. 
+Assuming that $|e_n| \approx C (\Delta t)^p$ then, taking the 
+log of both sides we obtain 
+$\log |e_n| \approx \log C + p \log (\Delta t).$ So, if we plot 
+$\log |e_n|$ against $\log (\Delta t)$, the slope of the resulting 
+line should give us an estimate of the order of convergence $p$.
+This is precisely how we often check that the certain rate 
+manifests in practice. The recipe looks something like this: 
+
+\begin{enumerate}
+    \item Find a problem for which you have an analytic solution 
+    $u(t)$. 
+    \item Implement algorithm to obtain $u_n$ for various 
+    values of $\Delta t$.
+    \item For each $\Delta t$, compute the error 
+    $|e_n| = |u(t_n) - u_n|$.
+    \item Plot $\log |e_n|$ against $\log (\Delta t)$ and estimate the slope to determine the order of convergence $p$.
+\end{enumerate}
+Since in our analysis the bound holds for $|e_n|$ uniformly in $n$, 
+it is often sufficient to plot $\log \max_n |e_n|$ 
+against $\log (\Delta t)$. One can also consider the average 
+$\frac{1}{N} \sum_{n=1}^{N}  |e_n|$ and then take the log. For ODE 
+solvers this should give the same rate of convergence $p$ 
+as obtained from the maximum error but for other types of 
+algorithms we may see better average rates than maximum rates so 
+be careful when interpreting average rates.
+
+As an example we consider the forward Euler method 
+applied to the Stefan's ice-growth problem in 
+\eqref{eq:stefan-ice-growth}. Recall that the ODE 
+has the ground 
+truth solution  $u(t) = \sqrt{2 D t + c^2}$ with initial condition 
+$u(0) = c$. In the following figures we plot 
+the maximum error $\max_n |e_n|$ against $\Delta t$ for forward 
+Euler method. The code is available in the accompanying notebook 
+from \Cref{Lec:extension_nonlinear_odes}. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{./Lectures/Lec5/stefan_forward_euler_convergence.png}
+    \caption{Maximum error $\max_n |e_n|$ against $\Delta t$ 
+    for the forward Euler method applied to 
+    the Stefan's ice-growth problem \eqref{eq:stefan-ice-growth}.}
+    \label{fig:forward-euler-stefan-error}
+\end{figure}
 
 
 
