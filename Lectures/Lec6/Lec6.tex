@@ -1,7 +1,174 @@
-\chapter{Stability regions of numerical methods}
+\chapter{Absolute stability}
+
+In \Cref{lec:accuracy} we introduced the notions of convergence and numerical 
+accuracy. In essence, a convergent numerical algorithm is the minimum we need 
+for it to be useful since, 
+eventually and with enough computing power (small $\Delta t$),
+the method should give us a good approximation to the truth. Having an order 
+of convergence makes this much stronger because it tells us precisely how 
+fast the error decays. However, as it turns out accuracy alone is not 
+quite sufficient for making a method useful and as we will see there is a
+tension between accuracy and the idea of stability that we describe below. 
+
+\section{Absolute stability}
+
+Recall our test ODE \eqref{eq:test_ode} 
+\begin{equation*}
+    \frac{d u}{d t} = \lambda u, \qquad u(0) = c.
+\end{equation*}
+and in particular the experiment in 
+\Cref{fig:test_ode_forward_backward_euler_comparison} where we 
+saw that when $\Delta t$ is too large then the forward Euler method 
+seems to oscillate wildly while backward Euler remains stable. This behavior 
+is so fundamental that the mathematical definition of stability is 
+often built around the test ODE itself. 
+
+Recall that the test ODE has analytic solution $e^{t \lambda} c$ and so 
+if $\text{Re}(\lambda) < 0$, then the solution decays to zero as $t \to \infty$.
+Now if we apply forward Euler to this problem we obtain 
+\begin{equation*}
+    u_{n} = u_{n-1} + \Delta t \lambda u_{n-1} = (1 + \Delta t \lambda) u_{n-1}.
+\end{equation*}
+Substituting the same expression for $u_{n-1}$ recursively, we obtain 
+\begin{equation*}
+    u_n = ( 1+ \Delta t \lambda)^n u_0.
+\end{equation*}
+Thus, the sequence converges to zero if and only if 
+\begin{equation}\label{eq:forward_euler_stability_condition}
+ |1 + \Delta t \lambda| < 1   
+\end{equation}
+ If $\lambda$ is real and negative, then 
+\begin{equation*}
+    -1 \le 1 - \Delta t \lambda \le 1 \quad \Rightarrow \Delta t \le  
+    \frac{2}{-\lambda} 
+    = \frac{2}{|\lambda|} =: \Delta t_{\max}.
+\end{equation*} 
+Thus we have a limit on the size of $\Delta t$ if we want the 
+solution to decay to zero as $n \to \infty$. If $\lambda$ is complex then 
+the condition \eqref{eq:forward_euler_stability_condition} corresponds
+to the quantitiy $\Delta t \lambda$ belonging  
+to the disk of radius $1$ centered at $-1$ as shown in 
+\Cref{fig:euler-stability-region}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.49\textwidth]
+    {./Lectures/Lec6/forward_euler_stability_region.png}
+    \includegraphics[width=0.49\textwidth]
+    {./Lectures/Lec6/backward_euler_stability_region.png}
+    \caption{Stability region for the forward Euler 
+    method on the left and backward Euler on the right. 
+    The blue shaded regions indicate stability. }
+    \label{fig:euler-stability-region}
+\end{figure}
+
+You might wonder why do we care about this particular 
+test problem and the decay of the solution to zero? Suppose 
+we are solving an ODE numerically using forward Euler 
+and have obtained a sequence of solutions $\{ u_{n} \}_{n =0}^{N-k}$ but a 
+small perturbation is introduced in the last estimate 
+$u_{N-k} \leftarrow u_{N-k} + \epsilon$. This happens all the time
+due to numerical round-off errors.
+Then the forward Euler method will continue to produce 
+the rest of the sequence as 
+\begin{equation*}
+    u_{\epsilon,N-k+j} = (1 + \Delta t \lambda)^j u_{N-k} = (1 + \Delta t \lambda)^j (u_{N-k} + \epsilon), \quad j = 1, 2, \dots, k.
+\end{equation*}
+In other words, the error $\delta u_{N-k+j} = u_{\epsilon,N-k+j} - u_{N-k+j}$ 
+satisfies
+\begin{equation*}
+    \delta u_{N-k+j} = (1 + \Delta t \lambda)^j \epsilon, \quad j = 1, 2, \dots, k.
+\end{equation*}
+and we prefer if this perturbation does not grow. 
+
+You might also wonder why do we care only about the linear ODE?
+ and how does this relate to "stability" of a solver in 
+more complex and nonlinear problems? 
+To see this suppose that we have a more general ODE 
+\begin{equation*}
+    \frac{d u}{d t} = f(u), \qquad u(0) = c,
+\end{equation*}
+with ground truth solution $u(t)$. 
+Now suppose that we make some small errors, say in 
+the initial condition $c$ or in the evaluation of $f(u)$
+which happens all the time when we implement numerical algorithms.  
+This leads to a perturbed solution $v(t) = u(t) + \epsilon(t)$, 
+where $\epsilon(t)$ represents the deviation of the perturbed 
+solution. Substituting $v$ into the ODE we find that 
+\begin{equation*}
+    \frac{d \epsilon}{d t} = f(u + \epsilon) - f(u) 
+    = \frac{\partial f}{\partial u}(u) \epsilon + \text{higher order terms}. 
+\end{equation*}
+Thus, roughly speaking, the perturbation $\epsilon$ solves 
+a linear ODE of a similar form to the test ODE except that 
+the coefficients $\frac{\partial f}{\partial u}(u)$ 
+depends on time technically. Thus, at least for 
+small time intervals the perturbation remains 
+controlled if 
+$| 1 + \Delta t \frac{\partial f}{\partial u}(u)| \le 1$.
+
+Let us now formalize our notion of stability a bit more.
+
+\begin{definition}
+    Consider the test ODE \eqref{eq:test_ode} with $\lambda 
+    \in \C$ such that $\text{Re}(\lambda) < 0$. Suppose 
+    $\{ u_n \}_{n=0}^\infty$ is a numerical solution 
+    produced by an ODE solver. We say the solution is {\it absolutely 
+    stable} if $|u_n| \le |u_{n-1}|$ for $n = 1, 2, \dots$.
+\end{definition}
+
+\begin{definition}
+    For a given numerical method, the {\it region of absolute 
+    stability} is the set of all $\lambda \Delta t \in \C$ 
+    for which the numerical solution of the 
+    test ODE \eqref{eq:test_ode} is absolutely stable.
+\end{definition}
+
+Thus, in the case of the forward Euler method this region of 
+absolute stability is simply $\{ z \in \C \mid |1 + z| \le 1 \}$
+while for backward Euler it is $\{ z \in \C \mid |1 - z| \ge 1 \}$.
+
+\begin{definition}
+    If the region of absolute stability of a numerical method 
+    contains the entire left half of the complex plane, 
+    we say that the method is {\it A-stable}.
+\end{definition}
+
+So forward Euler is {\it not} A-stable while backward 
+Euler is indeed {\it A-stable}.
+
+\section{Stability of backward Euler}
+We are now finally ready to make sense of the difference 
+we saw between the forward and backward Euler methods.
+Apply backwards Euler to the test ODE to obtain the sequence 
+\begin{equation*}
+    u_n = u_{n-1} + \Delta t \lambda u_n.
+\end{equation*}
+Solving for $u_n$ we simply obtain 
+\begin{equation*}
+    u_n = (1 - \Delta t \lambda)^{-1} u_{n-1}.
+\end{equation*}
+In other words, 
+\begin{equation*}
+    |u_n| = |(1 - \Delta t \lambda)^{-1}| |u_{n-1}|.
+\end{equation*}
+Since $|(1 - \Delta t \lambda)^{-1}| \le 1$,
+we see that the backward Euler method is absolutely stable 
+for {\it any} choice of $\Delta t >0$ whenever 
+$\text{Re}(\lambda) < 0$. In fact, the region of absolute 
+stability for backward Euler is the entire 
+complex plane minus the disk of radius 1 centered at 1
+as shown in \Cref{fig:euler-stability-region}. This has 
+profound practical implications: we are allowed to take as large
+a step as we want without worrying about instabilities. 
+
+\begin{quote}
+    Be careful, stability does not mean accuracy. Using large time 
+    steps still results in larger errors. The stability 
+    only ensures that perturbations do not grow uncontrollably.
+\end{quote}
 
 
 
-
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}

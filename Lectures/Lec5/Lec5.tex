@@ -1,4 +1,5 @@
 \chapter{On accuracy and stability}
+\label{lec:accuracy}
 
 So far we have discussed various practical aspects of the forward and backward 
 Euler methods and applied them to solve systems of ODEs. However, we 
@@ -81,18 +82,28 @@ introduced by the numerical scheme in a single step. For example,
 let us consider the forward Euler method. Then the local truncation 
 error at step $n$ takes the form 
 \begin{equation}\label{def:local_truncation_error}
-    \tau_n = \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(u(t_{n-1})) 
+    \tau_n = \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(t_{n-1},u(t_{n-1})) 
     =: \mcl{N}^{\text{FE}}_{\Delta t}[u(t_n)], 
     \qquad n =  1, 2, \dots,
 \end{equation}
 that is, the residual of the discretized ODE  after 
-plugging in the true solution $u(t_n)$. It turns out that 
-we can write any local truncation error in a similar form for 
-other numerical schemes as well, for example for backward Euler 
+plugging in the true solution $u(t_n)$. We often refer 
+to $\mcl{N}$ as a {\it difference operator} for short
+\footnote{Note that our notation for the difference operators 
+is a bit deficient since $\mcl{N}$ depends on $f, t_{n-1}, u(t_{n-1})$
+ explicitly but we suppress that dependence to keep things 
+ more clean and readable and think of $\mcl{N}$ as a 
+ operator that acts on $u(t_n)$ with parameters that are 
+ know either as input to the problem or as values computed 
+ from previous steps.}. 
+ It turns out that 
+we can write many other local truncation errors in a similar form for 
+other numerical schemes as well by using a different 
+difference operator.  For example for backward Euler 
 we have 
 \begin{equation*}
     \mcl{N}^{\text{BE}}_{\Delta t}[u(t_n)] 
-    := \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(u(t_{n})).
+    := \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(t_n, u(t_{n})).
 \end{equation*}
 So we now think of the global and local truncation errors 
 in a unified framework for arbitrary ODE solvers and 
