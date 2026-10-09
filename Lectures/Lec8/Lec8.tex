@@ -1,151 +1,164 @@
-\chapter{Higher order methods I: Runge-Kutta family}
+\chapter{Stability for systems plus stiffness}
 
-So far in the course we have mostly focused on 
-the forward and backward Euler methods both of 
-which are first order consistent and convergent. We typically 
-just say that these methods are first order accurate to mean 
-that their local truncation and global errors are 
-$\mathcal{O}(\Delta t)$. While these methods are simple and easy 
-to understand, in practice we often would like to use more accurate 
-methods, ideally those who have accuracy $\mathcal{O}(\Delta t^p)$ 
-for $p=2$ or $p=4$. Let's say we come up with a second order method, 
-i.e., $p=2$. Then by halving the stepm size $\Delta t \leftarrow \frac{\Delta t}{2}$, the error should decrease by a factor of $2^2 = 4$. If the method 
-is fourth order, i.e., $p=4$ then the error will drop by 
-a factor of $16$! Thus, pursuing such methods can realyl pay off in practice. 
+This lecture covers two important additional topics, one 
+is the extension of absolute stability to systems of ODEs 
+and second is the concept of stiffness that 
+sits at the intersection of stability and accuracy. 
 
-In this lecture we will consider one approach to the design of such methods 
-that is often called a one-step method: these are 
-update schemes where $\ub_{n}$ is computed only from $\ub_{n-1}$. In 
-the next example we will introduce multi-step methods where $\ub_{n}$ 
-is computed using multiple previous values such as 
-$\ub_{n-1}, \ub_{n-2}, \dots, \ub_{n-k}$ for some $k \ge 1$.
+\section{Stability for systems}
 
-
-\section{From quadrature to Runge-Kutta methods}
-
-Our starting point in deriving higher order methods is 
-the approximation of integrals, which is called 
-quadrature. Broadly speaking, consider some function 
-$g:[a, b] \to \R$ and suppose we want to approximate 
+We can naturally extend our notion of absolute stability 
+to systems of ODEs by considering the test problem 
 \begin{equation*}
-    \int_a^b g(x) \, dx.
+    \frac{d\ub}{dt} = A \ub,
+    \quad \ub(0) = \cb,
 \end{equation*}
-In quadrature we consider $s$ distinct points $x_1, x_2, \dots, x_s \in [a, b]$ and corresponding weights $w_1, w_2, \dots, w_s$ to approximate the integral as
+where we assume that $A$ is a diagonalizable matrix. Under 
+this assumption we can factorize $A$ as 
+$A = Q \Lambda Q^{-1},$ where $Q \in \C^{d \times d}$ is 
+the matrix of eigenvectors of $A$ and 
+$\Lambda \in \C^{d \times d}$ is the diagonal matrix 
+of its eigenvalues. Multiplying both sides of the ODE 
+by $Q^{-1}$ we obtain the alternative form 
 \begin{equation*}
-    \sum_{i=1}^s w_i g(x_i) \approx \int_{a}^{b} g(x) \, dx.
+    \frac{d \zb}{dt} = \Lambda \zb,
+    \quad \zb(0) = Q^{-1} \cb,
 \end{equation*}
-The choice of the weights and points $(x_i, w_i)$ constitutes 
-the quadrature rule. Popular examples are: 
+where $\zb(t) = Q^{-1} \ub(t)$ is the transformed variable. Since 
+$\lambda$ is diagona, this system is decoupleda and is equivalent 
+to solving $d$ independent scalar ODEs of the form 
 \begin{equation*}
-    \begin{aligned}[t]
-        \text{left point rule:} & \quad \int_a^b g(x) \, dx \approx (b-a) g(a), \\
-        \text{right point rule:} & \quad \int_a^b g(x) \, dx \approx (b-a) g(b), \\
-        \text{midpoint rule:} & \quad \int_a^b g(x) \, dx \approx (b-a) g\Big(\frac{a+b}{2}\Big), \\
-        \text{trapezoidal rule:} & \quad \int_a^b g(x) \, dx \approx \frac{b-a}{2} \Big(g(a) + g(b)\Big)
-    \end{aligned}
+    \frac{d z_i}{dt} = \lambda_i z_i,
+    \quad z_i(0) = (Q^{-1} \cb)_i.
 \end{equation*}
-These rules are illustrated in \Cref{fig:quadrature-rules}.
+Thus our previous ideas for absolute stability for scalar ODEs 
+can be directly applied to each of the decoupled scalar ODEs 
+in the transformed system. 
 
-\begin{figure}[htp]
-    \centering
-    \begin{tikzpicture}[thick, scale=0.9,
-        declare function={g(\x) = 0.8 + 0.5*\x + 0.4*sin(deg(2*\x)); xa = 0.5; xb = 3; xm = 1.75;},
-        area/.style={fill=blue!20, draw=blue!70!black},
-        dot/.style={circle, fill, inner sep=1.5pt}]
-        % axes, the function g, and labels common to all panels
-        \newcommand{\quadpanel}[1]{
-            \draw[->] (0,0) -- (4,0) node[right] {$x$};
-            \draw[->] (0,0) -- (0,3) node[above] {$y$};
-            \draw[very thick, domain=0.1:3.6, samples=100, smooth] plot (\x,{g(\x)}) node[right] {$g(x)$};
-            \node[below] at (xa,0) {\strut$a$};
-            \node[below] at (xb,0) {\strut$b$};
-            \node at (2,-1.1) {#1};
-        }
+For example, for the forward Euler 
+method, we obtain stability if each of the above 
+scalar ODEs satisfy the condition $|1 + \Delta t \lambda_i| < 1$ 
+for all $i = 1, \dots, d$. When $\lambda_i$ is real and negative then 
+we obtain the bound 
+\begin{equation*}
+    0 < \Delta t < \frac{2}{|\lambda_i|}.
+\end{equation*}
+So stability is dictated by the absolute largest eigenvalue of $A$.
+Similarly, for backward Euler we obtain the 
+stability condition $|1 - \Delta t \lambda_i| < 1$ 
+for all $i = 1, \dots, d$. So backward Euler remains 
+$A$-stable for systems of ODEs as well.
 
-        % left point rule
-        \begin{scope}[shift={(0,5)}]
-            \draw[area] (xa,0) rectangle (xb,{g(xa)});
-            \quadpanel{left point rule}
-            \node[dot] at (xa,{g(xa)}) {};
-        \end{scope}
 
-        % right point rule
-        \begin{scope}[shift={(6,5)}]
-            \draw[area] (xa,0) rectangle (xb,{g(xb)});
-            \quadpanel{right point rule}
-            \node[dot] at (xb,{g(xb)}) {};
-        \end{scope}
+\section{Stiffness}
+Stiffness is a concept that arises in the context of numerical 
+solution of ODEs and PDEs that reveals a tension between 
+stability and accuracy. It is somewhat qualitative and 
+so it is best described in the context of an example. 
 
-        % midpoint rule
-        \begin{scope}[shift={(0,0)}]
-            \draw[area] (xa,0) rectangle (xb,{g(xm)});
-            \draw[dashed, thin] (xm,0) -- (xm,{g(xm)});
-            \quadpanel{midpoint rule}
-            \node[below] at (xm,0) {$\frac{a+b}{2}$};
-            \node[dot] at (xm,{g(xm)}) {};
-        \end{scope}
+\begin{example}
+Consider the ODE 
+\begin{equation}\label{eq:stiff-ODE-example}
+    \frac{du}{dt} = - 100 ( u - \sin(t))
+    \quad u(0) = 1,
+\end{equation}
+for $t \ge 0$. Notice that due to the coefficient $-100$ the 
+solution to this ODE will decay towards zero very rapidly since 
+$\sin(t)$ is small when $t$ is near zero. However, the sinusoid 
+will eventually dominate the bevaior of the solution when $t$ 
+becomes larger, say closer to $\pi /2$. \Cref{fig:stiff-ODE-example}
+ shows a plot of the solution to this problem computed using 
+the forward and backward Euler methods.
 
-        % trapezoidal rule
-        \begin{scope}[shift={(6,0)}]
-            \draw[area] (xa,0) -- (xa,{g(xa)}) -- (xb,{g(xb)}) -- (xb,0) -- cycle;
-            \quadpanel{trapezoidal rule}
-            \node[dot] at (xa,{g(xa)}) {};
-            \node[dot] at (xb,{g(xb)}) {};
-        \end{scope}
-    \end{tikzpicture}
-    \caption{The left point, right point, midpoint, and trapezoidal rules 
-    applied to a smooth function $g$ on $[a, b]$. The shaded region in 
-    each panel is the area computed by the quadrature rule, while the 
-    exact integral is the area under the curve $g(x)$. Black dots mark 
-    the points where $g$ is evaluated.}
-    \label{fig:quadrature-rules}
+We see that backward Euler remains stable, as expected, 
+even for larget values of $\Delta t$. On the other hand, 
+forward Euler becomes unstable roughly when  we pick 
+$\Delta t > \frac{2}{100} = 0.02$ which is the dominant 
+eigenvalue of the system in the initial phase. 
+
+
+\begin{figure}
+    \includegraphics[width=0.5\textwidth]
+    {./Lectures/Lec8/stiff_backward_euler.png}
+        \includegraphics[width=0.5\textwidth]
+    {./Lectures/Lec8/stiff_forward_euler.png}
+    \caption{Solution of the stiff ODE \eqref{eq:stiff-ODE-example}
+    using forward and backward Euler methods plotted against the 
+    $\sin(t)$ which is the dominant mode after an initial transient 
+    phase.}
+    \label{fig:stiff-ODE-example}
 \end{figure}
-
-Let us now consider a generic scalar valued ODE 
-\begin{equation*}
-    u' = f(t,u), 
-\end{equation*}
-where we switched to the standard prime notation 
-$u'(t) = \frac{d u}{dt}(t)$ for convenience.
-We will develop our methods for this case but note that 
-they have a natural extension to systems of ODEs that 
-we will discuss later. 
-
-Consider the interval $[t_{n-1}, t_n]$ and integrate both sides of the ODE:
-\begin{equation*}
-    u(t_n) - u(t_{n-1}) = 
-    \int_{t_{n-1}}^{t_n} u'(t) \, dt 
-\end{equation*}
-Let us now approximate the integral on the 
-right hand side using the left point rule: 
-\begin{equation*}
-    u(t_n) - u(t_{n-1}) \approx (t_n - t_{n-1}) u'(t_{n-1}) 
-    = \Delta t \, f(t_{n-1}, u(t_{n-1})).
-\end{equation*}
-We recognize this as the forward Euler scheme. Using the 
-right point rule we obtain backward Euler:
-\begin{equation*}
-    u(t_n) - u(t_{n-1}) \approx \Delta t u'(t_n) 
-    = \Delta t f(t_n, u(t_n)) 
-\end{equation*}
-Continuing forward, if we use the midpoint rule we 
-obtain a new method, which is simply known as the (implicit)
- midpoint method: 
-\begin{equation*}
-    \begin{aligned}
-    u(t_n) - u(t_{n-1}) &\approx 
-    \Delta t u'\Big(\frac{t_{n-1}+t_n}{2}\Big) 
-    = \Delta t f\Big(\frac{t_{n-1}+t_n}{2}, u\Big(\frac{t_{n-1}+t_n}{2}\Big)\Big)\\
-    &\approx \Delta t f \Big( t_{n- \frac12}, \frac{u(t_n) + u(t_{n-1})}{2} \Big).
-    \end{aligned}
-\end{equation*}
+\end{example}
 
 
-% \begin{equation*}
-%     u(t_n) - u(t_{n-1}) = \int_{t_{n-1}}^{t_n} u'(t) \, dt = \int_{t_{n-1}}^{t_n} f(u(t)) \, dt.
-% \end{equation*}
+The above example illustrates the typical image we have in mind 
+when we think of a stiff ODE or problem. That is, a problem 
+where a severe restriction is imposed on explicit time-stepping 
+methods such as forward Euler but only for a brief period of 
+time. Once this period is cleared then the solution can be 
+approximated well with much larger time steps. Since implicit 
+methods such as backward Euler are unconditionally stable, 
+they can handle the stiff initial phase without
+requiring excessively small time steps and so they are often 
+recommended for stiff problems. 
+
+Another manifestation of stiffness is when dealing with systems 
+of ODEs. Here we may have some coordinates that have very 
+large eigenvalues, i.e., fast dynamics, evolving alongside 
+other coordinates that have much smaller eigenvalues, i.e., 
+slow dynamics. Then the fast coordinates will impose a 
+severe time restriction on explicit methods while 
+the slow coordinates can be advanced with much larger time steps, highlighting the stiffness of the system. We demonstrate an example of this below. 
+
+\begin{example}
+    Consider the linear system 
+    \begin{equation*}
+        \frac{d u_1}{dt} = - u_1, 
+      \quad \frac{d u_2}{dt} = - \lambda ( u_2 - u_1),
+      \quad (u_1, u_2)(0) = c_1, c_2.
+    \end{equation*}
+    Notice that the right hand side can 
+    be written in matrix form 
+    as 
+    \begin{equation*}
+         A \ub = \begin{pmatrix}
+            -1 & 0 \\
+            \lambda & -\lambda
+         \end{pmatrix} \begin{pmatrix}
+            u_1 \\
+            u_2
+         \end{pmatrix}
+    \end{equation*}
+    and the eigenvalues of the matrix $A$ are $-1$ and $-\lambda$. So 
+    if $\lambda \gg 1$, then the system exhibits stiffness 
+    because the second equation has a much faster timescale 
+    compared to the first one. Indeed, we can solve this 
+    system analytically: 
+    \begin{equation*}
+        u_1(t) = c_1 e^{-t}, \quad 
+        u_2(t) = \frac{\lambda c_1}{\lambda - 1} e^{-t} + 
+        \left( c_2 - \frac{\lambda c_1}{\lambda -1} \right) e^{-\lambda t}.
+    \end{equation*}
+    We can see that if $\lambda \gg 1$ then $u_2$ gets pulled 
+    towards $u_1$ very quickly while $u_1$ itself 
+    evolves slowly in time. 
+\end{example}
+
+In light of the above example, stiffness of a linear system of ODEs 
+can be characterized in terms of the ratio of 
+the largest to the smallest (in magnitude) eigenvalue of the system matrix. This ratio is often referred to as the stiffness ratio. 
+A large stiffness ratio indicates that the system has widely varying timescales, which can lead to stiffness in numerical simulations. For nonlinear 
+ODEs we consider the eigenvalues of the Jacobian matrix 
+of the system in the same manner. But keep in mind that the Jacobian 
+will change as the solution evolves in this case.
+
+\begin{quote}
+    The practical message here is that if a problem  is 
+    stiff, it is advisable to pay the additional computational 
+    cost of  using an implicit method, such as backward Euler, or 
+    other specialized solvers that can handle stiffness. 
+\end{quote}
 
 
-
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}
