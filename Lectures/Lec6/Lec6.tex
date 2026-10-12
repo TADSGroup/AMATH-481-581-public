@@ -1,72 +1,20 @@
-\chapter{The trapezoid method and the fundamental 
+\chapter{Order of convergence of forward Euler and the fundamental 
 theorem of Lax}
 
 So far we have defined the local truncation 
 error and the global error and observed, 
 empirically, that the forward Euler method 
 is indeed first-order convergent. 
-In this lecture we do a first derivation of a 
-higher order method, in particular 
-a second order method known as 
-the trapezoid method. Afterwards 
-we show how the local truncation error 
+We also saw Trapezoid method as an example of a second-order
+accurate method. 
+In this lecture we  show how the local truncation error 
 is related to the global error for the 
 forward Euler scheme followed by a fundamental 
-theorem of Lax that serves so simplify 
+theorem of Lax that serves to simplify 
 analysis for more complex methods.
 
 
-\section{Trapezoid method, our first second-order 
-method}\label{ex:trapezoid-method}
-As an alternative to the forward and backward 
-Euler methods we now consider the (symmetric) trapezoid method 
-which simply takes the form 
-\begin{equation}\label{eq:trapezoid-method}
-\frac{u_{n} - u_{n-1}}{\Delta t} 
-= \frac{1}{2} \Big( f(t_{n-1}, u_{n-1}) + f(t_n, u_n) \Big).
-\end{equation}
-Note that this is an implicit method since $f(t_n, u_n)$ 
-appears on the right hand side.
-Using Taylor expansions
-centered at the mid point $t_{n - 1/2} = \frac{1}{2} (t_n + t_{n-1})$
-we can write 
-\begin{equation*}
-\begin{aligned}
-    u(t_n) & = u(t_{n - 1/2}) + \frac{\Delta t}{2} 
-    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
-    + \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
-    + \mcl{O}(\Delta t^4),\\
-    u(t_{n-1}) &= u(t_{n - 1/2}) - \frac{\Delta t}{2} 
-    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
-    - \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
-    + \mcl{O}(\Delta t^4).
-\end{aligned}
-\end{equation*}
-Hence, we have the identity
-\begin{equation*}
-    \frac{u(t_n) - u(t_{n-1})}{\Delta t} 
-    =  u'(t_{n-1/2})  + \frac{\Delta t^2}{24} u''(t_{n - 1/2}) 
-    + \mcl{O}(\Delta t^4)
-\end{equation*}
-Using the same Taylor expansions for $u'$ we can write 
-\begin{equation*}
-\begin{aligned}
-    u'(t_{n-1/2}) & = u'(t_{n}) - \frac{\Delta t}{2} u''(t_{n}) + \frac{(\Delta t)^2}{8} u'''(t_{n}) + \mcl{O}(\Delta t^3),\\
-    u'(t_{n-1/2}) & = u'(t_{n-1}) + \frac{\Delta t}{2} u''(t_{n-1}) + \frac{(\Delta t)^2}{8} u'''(t_{n-1}) + \mcl{O}(\Delta t^3)
-\end{aligned}
-\end{equation*}
-and so 
-\begin{equation*}
-    u'(t_{n - 1/2}) = \frac{1}{2} (u'(t_n) + u'(t_{n-1}))
-     + \frac{\Delta t^2}{8} (u'''(t_n) + u'''(t_{n-1})) + \mcl{O}(\Delta t^3).
-\end{equation*}
-Substituting this into our update rule we see that the 
-Trapezoid method is indeed second order accurate:
-\begin{equation*}
-    \frac{u_{n} - u_{n-1}}{\Delta t} 
-    = \frac{1}{2} \Big( f(u_{n-1}) + f(u_n) \Big) 
-    + \mcl{O}(\Delta t^2).
-\end{equation*}
+
 
 
 \section{Deriving the order of convergence 
