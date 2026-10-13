@@ -228,15 +228,15 @@ we can write
 Hence, we have the identity
 \begin{equation*}
     \frac{u(t_n) - u(t_{n-1})}{\Delta t} 
-    =  u'(t_{n-1/2})  + \frac{\Delta t^2}{24} u''(t_{n - 1/2}) 
+    =  u'(t_{n-1/2})  + \frac{\Delta t^2}{24} u'''(t_{n - 1/2}) 
     + \mcl{O}(\Delta t^4)
 \end{equation*}
 Using the same Taylor expansions for $u'$ we can write 
 \begin{equation*}
 \begin{aligned}
-    u'(t_{n-1/2}) & = u'(t_{n}) - \frac{\Delta t}{2} u''(t_{n-1/2}) 
+    u'(t_{n}) & = u'(t_{n-1/2}) - \frac{\Delta t}{2} u''(t_{n-1/2}) 
     + \frac{(\Delta t)^2}{8} u'''(t_{n-1/2}) + \mcl{O}(\Delta t^3),\\
-    u'(t_{n-1/2}) & = u'(t_{n-1}) + \frac{\Delta t}{2} u''(t_{n-1/2}) 
+    u'(t_{n-1}) & = u'(t_{n-1/2}) + \frac{\Delta t}{2} u''(t_{n-1/2}) 
     + \frac{(\Delta t)^2}{8} u'''(t_{n-1/2}) + \mcl{O}(\Delta t^3)
 \end{aligned}
 \end{equation*}
