@@ -1,4 +1,4 @@
-\chapter{Extension to nonlinear systems of ODEs}
+\chapter{Forward and backward Euler for nonlinear ODEs}
 \label{Lec:extension_nonlinear_odes}
 
 In the last lecture we introduced the forward and backward Euler schemes 
@@ -130,95 +130,7 @@ number of Newton sub-iterations per step.}
 \label{fig:stefan_ice_growth}
 \end{figure}
 
-\section{Solving systems of ODEs}
-Finally we generalize our methods to systems of ODEs which also allows us to 
-solve higher order ODEs. Given the problem 
-\begin{equation*}
-    \frac{d}{dt} \ub = \fb(t, \ub), \qquad \ub(0) = \cb,
-\end{equation*}
-the forward Euler method is simply of the form 
-\begin{equation*}
-    \ub_{n+1} = \ub_n + \Delta t \, \fb(t_n, \ub_n),
-\end{equation*}
-essentially follows exactly the scalar case. The backward Euler method 
-also has the familiar form 
-\begin{equation*}
-    \ub_{n+1} = \ub_n + \Delta t \, \fb(t_{n+1}, \ub_{n+1}).
-\end{equation*} 
-However, we now realize that each iteration of backward Euler requires the solution 
-of a nonlinear system. For this we simply use the extension of Newton's method to systems: 
-given the nonlinear equation 
-\begin{equation*}
-    \gb(\vb) = 0, 
-\end{equation*}
-the Newton iteration takes the form 
-\begin{equation*}
-    \vb_{k+1} = \vb_{k} - \left( D \gb(\vb_{k}) \right)^{-1} \gb(\vb_{k}),
-\end{equation*}
-where $D \gb$ denotes the Jacobian matrix of $\gb$ as in \Cref{def:jacobian}.
-For backward Euler the Newton sub-iterations take the particular form 
-\begin{equation*}
-    \begin{aligned}
-    \vb_{k+1} & = \vb_{k} - \left( D_{\ub} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right] \right)^{-1} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right] \\
-    & = \vb_{k} - \left( I - \Delta t \, D_{\ub} \fb(t_{n+1}, \vb_{k}) \right)^{-1} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right].
-\end{aligned}
-\end{equation*}
-Note that we now need to have access to $D\fb$ and invert a matrix at 
-each iteration of Newton's method. $D \fb$ can be approximated in many 
-ways although nowadays automatic differentiation tools are often used to 
-compute it efficiently. The inversion of the matrix can also be done 
-using various techniques from linear algebra that we will not discuss 
-for now. Let us summarize the algorithm for completeness: 
 
-\begin{algorithm}
-\caption{Backward Euler with Newton Subiterations for Systems}\label{alg:backward_euler_newton_systems}
-\begin{algorithmic}
-\State Given $\cb$, $\fb$, $D_{\ub}\fb$, $\Delta t$, and tolerance $\text{tol} > 0$
-\State Set $\ub_0 = \cb$ 
-\For{$n = 0, 1, 2, \dots, T/\Delta t - 1$}
-\State Initialize $\vb_0 = \ub_n$
-\State Set $k = 0$
-\Repeat
-    \State Set $\vb_{k+1} = \vb_k - \left( I - \Delta t \, D_{\ub} \fb(t_{n+1}, \vb_k) \right)^{-1} \left[ \vb_k - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_k) \right]$
-    \State Increment $k \gets k+1$
-\Until{$|\vb_{k+1} - \vb_k| < \text{tol}$}
-\State Set $\ub_{n+1} = \vb_{k+1}$
-\EndFor
-\end{algorithmic}
-\end{algorithm}
-
-\subsection{A motivating example: predator-prey model}
-Let us consider the Lotka-Volterra predator-prey model that models the interaction between predators and prey. The system of ODEs is given by
-\begin{equation*}
-    \begin{aligned}
-    \frac{du_1}{dt} & = \alpha u_1 - \beta u_1 u_2, \\
-    \frac{du_2}{dt} & = \delta u_1 u_2 - \gamma u_2,
-    \end{aligned}
-\end{equation*}
-where $u_1(t)$ represents the prey population, $u_2(t)$ represents the 
-predator population, and $\alpha$, $\beta$, $\gamma$, $\delta$ are 
-positive constants. Here the right hand side takes the form 
-\begin{equation*}
-    \fb(t, \ub) = \begin{bmatrix}
-    \alpha u_1 - \beta u_1 u_2 \\
-    \delta u_1 u_2 - \gamma u_2
-    \end{bmatrix}, 
-    \qquad D_{\ub} \fb(t, \ub) = \begin{bmatrix}
-    \alpha - \beta u_2 & -\beta u_1 \\
-    \delta u_2 & \delta u_1 - \gamma
-    \end{bmatrix}.
-\end{equation*}
-We show an instance of the solution to this system below in \Cref{fig:LV-example}.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{./Lectures/Lec4/lotka_volterra.png}
-    \caption{An example solution to the Lotka-Volterra predator-prey model
-    with parameters $(\alpha, \beta, \gamma, \delta) = (1, 1, 1.5, 0.075)$ 
-    computed using the backward Euler method with Newton subiterations.
-    }
-    \label{fig:LV-example}
-\end{figure}
 
 
 \bibliographystyle{plainnat}

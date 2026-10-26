@@ -1,15 +1,106 @@
-\chapter{Accuracy}
+\chapter{Solving nonlinear systems and an introduction 
+to convergence}
 \label{lec:accuracy}
 
-So far we have discussed various practical aspects of the forward and backward 
-Euler methods and applied them to solve systems of ODEs. However, we 
-have noticed various pecular things about these algorithms. 
-For example, in \Cref{fig:test_ode_forward_backward_euler_comparison} we 
-saw that the numerical solutions deviated from the true solution of 
-the test ODE. In fact, in some regimes the forward Euler solution 
-became unstable while the backward method remained stable. 
-We will now dig deeper into these ideas starting with 
-the concepts of convergence and numerical accuracy. 
+In this lecture we extend the Newton method to systems of 
+ODEs to obtain a complete algorithm for implementing 
+backward Euler for nonlinear systems of ODEs. 
+Afterwards we briefly introduce the notion of a 
+convergent method which sets us up for upcoming 
+theoretical concepts.
+
+
+\section{Solving systems of ODEs}
+
+Finally we generalize our methods to systems of ODEs which also allows us to 
+solve higher order ODEs. Given the problem 
+\begin{equation*}
+    \frac{d}{dt} \ub = \fb(t, \ub), \qquad \ub(0) = \cb,
+\end{equation*}
+the forward Euler method is simply of the form 
+\begin{equation*}
+    \ub_{n+1} = \ub_n + \Delta t \, \fb(t_n, \ub_n),
+\end{equation*}
+essentially follows exactly the scalar case. The backward Euler method 
+also has the familiar form 
+\begin{equation*}
+    \ub_{n+1} = \ub_n + \Delta t \, \fb(t_{n+1}, \ub_{n+1}).
+\end{equation*} 
+However, we now realize that each iteration of backward Euler requires the solution 
+of a nonlinear system. For this we simply use the extension of Newton's method to systems: 
+given the nonlinear equation 
+\begin{equation*}
+    \gb(\vb) = 0, 
+\end{equation*}
+the Newton iteration takes the form 
+\begin{equation*}
+    \vb_{k+1} = \vb_{k} - \left( D \gb(\vb_{k}) \right)^{-1} \gb(\vb_{k}),
+\end{equation*}
+where $D \gb$ denotes the Jacobian matrix of $\gb$ as in \Cref{def:jacobian}.
+For backward Euler the Newton sub-iterations take the particular form 
+\begin{equation*}
+    \begin{aligned}
+    \vb_{k+1} & = \vb_{k} - \left( D_{\ub} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right] \right)^{-1} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right] \\
+    & = \vb_{k} - \left( I - \Delta t \, D_{\ub} \fb(t_{n+1}, \vb_{k}) \right)^{-1} \left[ \vb_{k} - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_{k}) \right].
+\end{aligned}
+\end{equation*}
+Note that we now need to have access to $D\fb$ and invert a matrix at 
+each iteration of Newton's method. $D \fb$ can be approximated in many 
+ways although nowadays automatic differentiation tools are often used to 
+compute it efficiently. The inversion of the matrix can also be done 
+using various techniques from linear algebra that we will not discuss 
+for now. Let us summarize the algorithm for completeness: 
+
+\begin{algorithm}
+\caption{Backward Euler with Newton Subiterations for Systems}\label{alg:backward_euler_newton_systems}
+\begin{algorithmic}
+\State Given $\cb$, $\fb$, $D_{\ub}\fb$, $\Delta t$, and tolerance $\text{tol} > 0$
+\State Set $\ub_0 = \cb$ 
+\For{$n = 0, 1, 2, \dots, T/\Delta t - 1$}
+\State Initialize $\vb_0 = \ub_n$
+\State Set $k = 0$
+\Repeat
+    \State Set $\vb_{k+1} = \vb_k - \left( I - \Delta t \, D_{\ub} \fb(t_{n+1}, \vb_k) \right)^{-1} \left[ \vb_k - \ub_n - \Delta t \, \fb(t_{n+1}, \vb_k) \right]$
+    \State Increment $k \gets k+1$
+\Until{$|\vb_{k+1} - \vb_k| < \text{tol}$}
+\State Set $\ub_{n+1} = \vb_{k+1}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{A motivating example: predator-prey model}
+Let us consider the Lotka-Volterra predator-prey model that models the interaction between predators and prey. The system of ODEs is given by
+\begin{equation*}
+    \begin{aligned}
+    \frac{du_1}{dt} & = \alpha u_1 - \beta u_1 u_2, \\
+    \frac{du_2}{dt} & = \delta u_1 u_2 - \gamma u_2,
+    \end{aligned}
+\end{equation*}
+where $u_1(t)$ represents the prey population, $u_2(t)$ represents the 
+predator population, and $\alpha$, $\beta$, $\gamma$, $\delta$ are 
+positive constants. Here the right hand side takes the form 
+\begin{equation*}
+    \fb(t, \ub) = \begin{bmatrix}
+    \alpha u_1 - \beta u_1 u_2 \\
+    \delta u_1 u_2 - \gamma u_2
+    \end{bmatrix}, 
+    \qquad D_{\ub} \fb(t, \ub) = \begin{bmatrix}
+    \alpha - \beta u_2 & -\beta u_1 \\
+    \delta u_2 & \delta u_1 - \gamma
+    \end{bmatrix}.
+\end{equation*}
+We show an instance of the solution to this system below in \Cref{fig:LV-example}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{./Lectures/Lec5/lotka_volterra.png}
+    \caption{An example solution to the Lotka-Volterra predator-prey model
+    with parameters $(\alpha, \beta, \gamma, \delta) = (1, 1, 1.5, 0.075)$ 
+    computed using the backward Euler method with Newton subiterations.
+    }
+    \label{fig:LV-example}
+\end{figure}
+
 
 \section{Convergence}
 
@@ -57,202 +148,7 @@ use a scalar $\lambda$ here for simplicity.)
 \end{figure}
 
 
-\section{Numerical accuracy}
-
-While convergence is an important property of a an algorithm, 
-indeed without it the algorithm is mostly useless, we often 
-would like to understand more about the algorithm. 
-In particular, we would like to know how fast the method 
-converges and essentially how accurate it is. 
-
-When working with ODE solvers we typically consider two types of errors: 
-a global error and a local truncation error.
-Let us consider scalar ODEs. Then the global error is 
-simply the difference between the true solution and 
-the numerical solution at a given time step, i.e., 
-\begin{equation}\label{def:global_error}
-    e_n = u(t_n) - u_n, \qquad n = 1, 2, \dots,
-\end{equation}
-We already plotted the magnitude of this quantitiy in 
-\Cref{fig:test_ode_convergence}.
-Naturally you would consider $|e_n|$ as a measure of the error at each time step
-since the sign of the error is often less important than its magnitude.
-The truncation error, on the other hand, measures the error 
-introduced by the numerical scheme in a single step. For example, 
-let us consider the forward Euler method. Then the local truncation 
-error at step $n$ takes the form 
-\begin{equation}\label{def:local_truncation_error}
-    \tau_n = \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(t_{n-1},u(t_{n-1})) 
-    =: \mcl{N}^{\text{FE}}_{\Delta t}[u(t_n)], 
-    \qquad n =  1, 2, \dots,
-\end{equation}
-that is, the residual of the discretized ODE  after 
-plugging in the true solution $u(t_n)$. We often refer 
-to $\mcl{N}$ as a {\it difference operator} for short
-\footnote{Note that our notation for the difference operators 
-is a bit deficient since $\mcl{N}$ depends on $f, t_{n-1}, u(t_{n-1})$
- explicitly but we suppress that dependence to keep things 
- more clean and readable and think of $\mcl{N}$ as a 
- operator that acts on $u(t_n)$ with parameters that are 
- know either as input to the problem or as values computed 
- from previous steps.}. 
- It turns out that 
-we can write many other local truncation errors in a similar form for 
-other numerical schemes as well by using a different 
-difference operator.  For example for backward Euler 
-we have 
-\begin{equation*}
-    \mcl{N}^{\text{BE}}_{\Delta t}[u(t_n)] 
-    := \frac{u(t_{n}) - u(t_{n-1})}{\Delta t} - f(t_n, u(t_{n})).
-\end{equation*}
-So we now think of the global and local truncation errors 
-in a unified framework for arbitrary ODE solvers and 
-the rest of our discussion below holds in this generality. 
-But if you would like a concrete example to ground your reading 
-just keep the forward Euler scheme in mind. 
 
 
-It turns out, as 
-we will see shortly, that the local truncation error of a numerical 
-scheme  is closely related to the global error. 
-
-
-\subsection{Order of accuracy and convergence} 
-Following the parlance of \cite{ascher}, we say that a 
-numerical method is {\it accurate (or  consistent )
- of order $p$} if the local truncation error satisfies 
- \begin{equation*}
-    \tau_n = \mcl{O}(\Delta t^p), \qquad n = 1, 2, \dots,
- \end{equation*}
- where we recall the {\it big-O} notation from 
- \Cref{def:big_o}. We further say that the method is 
- {\it convergent of order $p$} if 
- \begin{equation*}
-    e_n = \mcl{O}(\Delta t^p), \qquad n = 1, 2, \dots.
- \end{equation*}
- It is often easy to control the local truncation erros and 
- verify order of accuracy of an algorithm. 
- 
- \begin{example}\label{ex:euler_first_order_accuracy}    
-  For both forward and 
- backward Euler methods we can use Taylor expansions to 
- directly verify that 
- \begin{equation*}
-    \tau_n = \frac{\Delta t}{2} u''(t_n) + \mcl{O}(\Delta t^2).
- \end{equation*}
- which shows that both methods are accurate (or consistent) 
- of order 1.
-\end{example}
-
-
-
-\section{Empirical validation of the order of convergence}
-
-While the theoretical analysis provides a rigorous foundation 
-for the behavior of errors it is important that we ask how 
-these theoretical predictions manifest in practice and 
-how can we tell if a method is indeed of a particular order. 
-Assuming that $|e_n| \approx C (\Delta t)^p$ then, taking the 
-log of both sides we obtain 
-$\log |e_n| \approx \log C + p \log (\Delta t).$ So, if we plot 
-$\log |e_n|$ against $\log (\Delta t)$, the slope of the resulting 
-line should give us an estimate of the order of convergence $p$.
-This is precisely how we often check that the certain rate 
-manifests in practice. The recipe looks something like this: 
-
-\begin{enumerate}
-    \item Find a problem for which you have an analytic solution 
-    $u(t)$. 
-    \item Implement algorithm to obtain $u_n$ for various 
-    values of $\Delta t$.
-    \item For each $\Delta t$, compute the error 
-    $|e_n| = |u(t_n) - u_n|$.
-    \item Plot $\log |e_n|$ against $\log (\Delta t)$ and estimate the slope to determine the order of convergence $p$.
-\end{enumerate}
-Since in our analysis the bound holds for $|e_n|$ uniformly in $n$, 
-it is often sufficient to plot $\log \max_n |e_n|$ 
-against $\log (\Delta t)$. One can also consider the average 
-$\frac{1}{N} \sum_{n=1}^{N}  |e_n|$ and then take the log. For ODE 
-solvers this should give the same rate of convergence $p$ 
-as obtained from the maximum error but for other types of 
-algorithms we may see better average rates than maximum rates so 
-be careful when interpreting average rates.
-
-As an example we consider the forward Euler method 
-applied to the Stefan's ice-growth problem in 
-\eqref{eq:stefan-ice-growth}. Recall that the ODE 
-has the ground 
-truth solution  $u(t) = \sqrt{2 D t + c^2}$ with initial condition 
-$u(0) = c$. In the following figures we plot 
-the maximum error $\max_n |e_n|$ against $\Delta t$ for forward 
-Euler method. The code is available in the accompanying notebook 
-from \Cref{Lec:extension_nonlinear_odes}. 
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\textwidth]{./Lectures/Lec5/stefan_forward_euler_convergence.png}
-    \caption{Maximum error $\max_n |e_n|$ against $\Delta t$ 
-    for the forward Euler method applied to 
-    the Stefan's ice-growth problem \eqref{eq:stefan-ice-growth}.}
-    \label{fig:forward-euler-stefan-error}
-\end{figure}
-
-
-\section{Trapezoid method, our first second-order 
-method}\label{ex:trapezoid-method}
-
-As an alternative to the forward and backward 
-Euler methods we now consider the (symmetric) trapezoid method 
-which simply takes the form 
-\begin{equation}\label{eq:trapezoid-method}
-\frac{u_{n} - u_{n-1}}{\Delta t} 
-= \frac{1}{2} \Big( f(t_{n-1}, u_{n-1}) + f(t_n, u_n) \Big).
-\end{equation}
-Note that this is an implicit method since $f(t_n, u_n)$ 
-appears on the right hand side.
-Using Taylor expansions
-centered at the mid point $t_{n - 1/2} = \frac{1}{2} (t_n + t_{n-1})$
-we can write 
-\begin{equation*}
-\begin{aligned}
-    u(t_n) & = u(t_{n - 1/2}) + \frac{\Delta t}{2} 
-    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
-    + \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
-    + \mcl{O}(\Delta t^4),\\
-    u(t_{n-1}) &= u(t_{n - 1/2}) - \frac{\Delta t}{2} 
-    u'(t_{n - 1/2}) + \frac{(\Delta t)^2}{8} u''(t_{n - 1/2}) 
-    - \frac{\Delta t^3}{48}(u'''(t_{n - 1/2}))
-    + \mcl{O}(\Delta t^4).
-\end{aligned}
-\end{equation*}
-Hence, we have the identity
-\begin{equation*}
-    \frac{u(t_n) - u(t_{n-1})}{\Delta t} 
-    =  u'(t_{n-1/2})  + \frac{\Delta t^2}{24} u'''(t_{n - 1/2}) 
-    + \mcl{O}(\Delta t^4)
-\end{equation*}
-Using the same Taylor expansions for $u'$ we can write 
-\begin{equation*}
-\begin{aligned}
-    u'(t_{n}) & = u'(t_{n-1/2}) - \frac{\Delta t}{2} u''(t_{n-1/2}) 
-    + \frac{(\Delta t)^2}{8} u'''(t_{n-1/2}) + \mcl{O}(\Delta t^3),\\
-    u'(t_{n-1}) & = u'(t_{n-1/2}) + \frac{\Delta t}{2} u''(t_{n-1/2}) 
-    + \frac{(\Delta t)^2}{8} u'''(t_{n-1/2}) + \mcl{O}(\Delta t^3)
-\end{aligned}
-\end{equation*}
-and so 
-\begin{equation*}
-    u'(t_{n - 1/2}) = \frac{1}{2} (u'(t_n) + u'(t_{n-1}))
-     + \frac{\Delta t^2}{8} (u'''(t_{n-1/2}) + u'''(t_{n-1/2})) + \mcl{O}(\Delta t^3).
-\end{equation*}
-Substituting this into our update rule we see that the 
-Trapezoid method is indeed second order accurate:
-\begin{equation*}
-    \frac{u_{n} - u_{n-1}}{\Delta t} 
-    = \frac{1}{2} \Big( f(u_{n-1}) + f(u_n) \Big) 
-    + \mcl{O}(\Delta t^2).
-\end{equation*}
-
-
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}

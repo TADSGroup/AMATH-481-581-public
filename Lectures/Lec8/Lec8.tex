@@ -1,164 +1,162 @@
-\chapter{Stability for systems plus stiffness}
+\chapter{The fundamental theorem of Lax and introduction to stability}
+\label{ch:fund-lax-intro-stability}
 
-This lecture covers two important additional topics, one 
-is the extension of absolute stability to systems of ODEs 
-and second is the concept of stiffness that 
-sits at the intersection of stability and accuracy. 
-
-\section{Stability for systems}
-
-We can naturally extend our notion of absolute stability 
-to systems of ODEs by considering the test problem 
-\begin{equation*}
-    \frac{d\ub}{dt} = A \ub,
-    \quad \ub(0) = \cb,
-\end{equation*}
-where we assume that $A$ is a diagonalizable matrix. Under 
-this assumption we can factorize $A$ as 
-$A = Q \Lambda Q^{-1},$ where $Q \in \C^{d \times d}$ is 
-the matrix of eigenvectors of $A$ and 
-$\Lambda \in \C^{d \times d}$ is the diagonal matrix 
-of its eigenvalues. Multiplying both sides of the ODE 
-by $Q^{-1}$ we obtain the alternative form 
-\begin{equation*}
-    \frac{d \zb}{dt} = \Lambda \zb,
-    \quad \zb(0) = Q^{-1} \cb,
-\end{equation*}
-where $\zb(t) = Q^{-1} \ub(t)$ is the transformed variable. Since 
-$\lambda$ is diagona, this system is decoupleda and is equivalent 
-to solving $d$ independent scalar ODEs of the form 
-\begin{equation*}
-    \frac{d z_i}{dt} = \lambda_i z_i,
-    \quad z_i(0) = (Q^{-1} \cb)_i.
-\end{equation*}
-Thus our previous ideas for absolute stability for scalar ODEs 
-can be directly applied to each of the decoupled scalar ODEs 
-in the transformed system. 
-
-For example, for the forward Euler 
-method, we obtain stability if each of the above 
-scalar ODEs satisfy the condition $|1 + \Delta t \lambda_i| < 1$ 
-for all $i = 1, \dots, d$. When $\lambda_i$ is real and negative then 
-we obtain the bound 
-\begin{equation*}
-    0 < \Delta t < \frac{2}{|\lambda_i|}.
-\end{equation*}
-So stability is dictated by the absolute largest eigenvalue of $A$.
-Similarly, for backward Euler we obtain the 
-stability condition $|1 - \Delta t \lambda_i| < 1$ 
-for all $i = 1, \dots, d$. So backward Euler remains 
-$A$-stable for systems of ODEs as well.
+In the last lecture we showed that forward Euler is convergent of 
+order one using direct calculations. Doing this is difficult for more 
+complicated methods so it is often helpful to break the problem 
+into smaller subproblems. This can be achieved using a 
+fundamental theorem due to Peter Lax that allows us 
+to combine order of consistency/accuracy (think $\tau_n$) 
+with the notion of $0$-stability to obtain order of convergence.  
 
 
-\section{Stiffness}
-Stiffness is a concept that arises in the context of numerical 
-solution of ODEs and PDEs that reveals a tension between 
-stability and accuracy. It is somewhat qualitative and 
-so it is best described in the context of an example. 
+\section{Consistency + $0$-stability = convergence}
+Let us begin by defining $0$-stability for a numerical scheme. 
 
-\begin{example}
-Consider the ODE 
-\begin{equation}\label{eq:stiff-ODE-example}
-    \frac{du}{dt} = - 100 ( u - \sin(t))
-    \quad u(0) = 1,
+\begin{definition}[$0$-stability]
+    Consider a numerical ODE solver with a difference operator 
+    $\mcl{N}_{\Delta t}$. We say the method is $0$-stable 
+    if there exist constants $C, h_0 >0$ 
+    independent of $\Delta t$ 
+    such that
+    for all $\Delta t \le h_0$ and 
+     any two sequences $\{v_n\}_{n=1}^N$ and 
+    $\{w_n\}_{n=1}^N$  
+    we have the bound 
+    \begin{equation*}
+        |v_n - w_n| \le C \Big[ | v_0 - w_0| 
+        + \max_{1 \le j \le n} \left| \mcl{N}_{\Delta t}[v_{j-1}] - 
+        \mcl{N}_{\Delta t}[w_{j-1}] \right| \Big].
+    \end{equation*}
+\end{definition}
+If we think of $v_n$ and $w_n$ as two numerical solutions 
+to our ODE then $0$-stability says that for small enough $\Delta t$ 
+the difference between the two numerical solutions 
+remains bounded in terms of the initial conditions as well as 
+the perturbations introduced by 
+applying the difference operator $\mcl{N}_{\Delta t}$. The "0" in 
+the $0$-stability terminology refers to the fact that we 
+require $\Delta t$ to be sufficiently small, hence it is 
+often considered to be a notion of stability in the
+limit $\Delta t \to 0$.
+
+With this definition at hand, we obtain the following fundamental 
+theorem which is known as the Lax equivalence theorem due to 
+Peter Lax. 
+
+\begin{theorem}\label{thm:lax-equivalence}
+    A numerical method that is consistent and $0$-stable 
+    is also convergent. In fact, if the method is 
+    consistent of order $p$ then it is also convergent 
+    of order $p$.
+\end{theorem}
+
+\begin{proof}
+    Take the sequences $v_n = u(t_n)$ and $ w_n = u_n$ produced 
+    by our numerical scheme. Then substituting in the 
+    definition of $0$-stability, we obtain 
+    \begin{equation*}
+        \begin{aligned}
+        |e_n| & \le C \Big[ e_0 + \max_{1 \le j \le n} | \mcl{N}_{\Delta t}[u(t_{j-1})] - 
+        \mcl{N}_{\Delta t}[u_{j-1}]| \Big] \\ 
+        & \le C \max_{1 \le j \le n} | \tau_j | = \mcl{O}(\Delta t^p).
+        \end{aligned}
+    \end{equation*}
+\end{proof}
+The proof of this result is simple which implies that most of 
+the work in showing the order of convergence of a method 
+has to go into verifying its conditions. Namely, for any 
+other method you have to first obtain a bound on the 
+local truncation errors $\tau_n$ and then prove that the 
+resulting difference operator $\mcl{N}_{\Delta t}$ is $0$-stable. 
+For both of these steps we often rely heavily on Taylor expansions 
+as well as additional smoothness assumptions as we 
+did in the forward Euler example.
+
+For the forward Euler method we have already verified first order 
+consistency. Proving that the method is $0$-stable is left as an exercise 
+in the homework sets and follows a somewhat simialr calculation to 
+our proof from the previous lecture.
+
+\section{Motivation for stability analysis}
+
+Now that we have an idea of how the error analysis can be performed 
+for a numerical ODE solver we can turn our attention to 
+other important issues that affect the quality of our numerical 
+solutions. In particular we will focus on the issue of stability 
+\footnote{Note that despite the terminology this will turn out 
+to be very different from $0$-stability.}. 
+
+To motivate the idea let us consider the following simple ODE 
+\begin{equation}\label{eq:stiff-ODE}
+    \frac{d u}{d t} = - 100 ( u - \sin(t)), \quad u(0)=1. 
 \end{equation}
-for $t \ge 0$. Notice that due to the coefficient $-100$ the 
-solution to this ODE will decay towards zero very rapidly since 
-$\sin(t)$ is small when $t$ is near zero. However, the sinusoid 
-will eventually dominate the bevaior of the solution when $t$ 
-becomes larger, say closer to $\pi /2$. \Cref{fig:stiff-ODE-example}
- shows a plot of the solution to this problem computed using 
-the forward and backward Euler methods.
-
-We see that backward Euler remains stable, as expected, 
-even for larget values of $\Delta t$. On the other hand, 
-forward Euler becomes unstable roughly when  we pick 
-$\Delta t > \frac{2}{100} = 0.02$ which is the dominant 
-eigenvalue of the system in the initial phase. 
+The numerical solution to this problem using both forward and backward 
+Euler is presented in \Cref{fig:instability}. We see that 
+when $\Delta t$ is large the forward and backward scheme exhibit very 
+different behavior. Indeed forward Euler predicts large spurious 
+oscillations that are not present in the backward Euler solution. 
+The goal of stability analysis is to understand this phenomenon and 
+come up with conditions or constraints that avoid it. 
 
 
 \begin{figure}
-    \includegraphics[width=0.5\textwidth]
-    {./Lectures/Lec8/stiff_backward_euler.png}
-        \includegraphics[width=0.5\textwidth]
-    {./Lectures/Lec8/stiff_forward_euler.png}
-    \caption{Solution of the stiff ODE \eqref{eq:stiff-ODE-example}
-    using forward and backward Euler methods plotted against the 
-    $\sin(t)$ which is the dominant mode after an initial transient 
-    phase.}
-    \label{fig:stiff-ODE-example}
+    \centering
+    \includegraphics[width=0.48 \textwidth]{Lectures/Lec8/stiff_forward_euler}
+    \includegraphics[width=0.48 \textwidth]{Lectures/Lec8/stiff_backward_euler}
+    \caption{Nunmerical solution of \eqref{eq:stiff-ODE} using 
+    forward Euler (left) and backward Euler (right). Notice the 
+    extra oscillations that appear in the forward Euler solution that 
+    appear to vanish for sufficiently small $\Delta t$. But these 
+    oscillations are absent for backward Euler.}
+    \label{fig:instability}
 \end{figure}
-\end{example}
-
-
-The above example illustrates the typical image we have in mind 
-when we think of a stiff ODE or problem. That is, a problem 
-where a severe restriction is imposed on explicit time-stepping 
-methods such as forward Euler but only for a brief period of 
-time. Once this period is cleared then the solution can be 
-approximated well with much larger time steps. Since implicit 
-methods such as backward Euler are unconditionally stable, 
-they can handle the stiff initial phase without
-requiring excessively small time steps and so they are often 
-recommended for stiff problems. 
-
-Another manifestation of stiffness is when dealing with systems 
-of ODEs. Here we may have some coordinates that have very 
-large eigenvalues, i.e., fast dynamics, evolving alongside 
-other coordinates that have much smaller eigenvalues, i.e., 
-slow dynamics. Then the fast coordinates will impose a 
-severe time restriction on explicit methods while 
-the slow coordinates can be advanced with much larger time steps, highlighting the stiffness of the system. We demonstrate an example of this below. 
-
-\begin{example}
-    Consider the linear system 
-    \begin{equation*}
-        \frac{d u_1}{dt} = - u_1, 
-      \quad \frac{d u_2}{dt} = - \lambda ( u_2 - u_1),
-      \quad (u_1, u_2)(0) = c_1, c_2.
-    \end{equation*}
-    Notice that the right hand side can 
-    be written in matrix form 
-    as 
-    \begin{equation*}
-         A \ub = \begin{pmatrix}
-            -1 & 0 \\
-            \lambda & -\lambda
-         \end{pmatrix} \begin{pmatrix}
-            u_1 \\
-            u_2
-         \end{pmatrix}
-    \end{equation*}
-    and the eigenvalues of the matrix $A$ are $-1$ and $-\lambda$. So 
-    if $\lambda \gg 1$, then the system exhibits stiffness 
-    because the second equation has a much faster timescale 
-    compared to the first one. Indeed, we can solve this 
-    system analytically: 
-    \begin{equation*}
-        u_1(t) = c_1 e^{-t}, \quad 
-        u_2(t) = \frac{\lambda c_1}{\lambda - 1} e^{-t} + 
-        \left( c_2 - \frac{\lambda c_1}{\lambda -1} \right) e^{-\lambda t}.
-    \end{equation*}
-    We can see that if $\lambda \gg 1$ then $u_2$ gets pulled 
-    towards $u_1$ very quickly while $u_1$ itself 
-    evolves slowly in time. 
-\end{example}
-
-In light of the above example, stiffness of a linear system of ODEs 
-can be characterized in terms of the ratio of 
-the largest to the smallest (in magnitude) eigenvalue of the system matrix. This ratio is often referred to as the stiffness ratio. 
-A large stiffness ratio indicates that the system has widely varying timescales, which can lead to stiffness in numerical simulations. For nonlinear 
-ODEs we consider the eigenvalues of the Jacobian matrix 
-of the system in the same manner. But keep in mind that the Jacobian 
-will change as the solution evolves in this case.
 
 \begin{quote}
-    The practical message here is that if a problem  is 
-    stiff, it is advisable to pay the additional computational 
-    cost of  using an implicit method, such as backward Euler, or 
-    other specialized solvers that can handle stiffness. 
+    While accuracy and convergence analysis involve the study of 
+    the asymptotic behavior of a method in the small $\Delta t$ limit, 
+    stability analysis is concerned with the behavior of algorithms 
+    for larger values of $\Delta t$. 
 \end{quote}
 
+Motivated by the above example, let us now consider an even simpler 
+problem, i.e., our test ODE 
+\begin{equation*}
+    \frac{d u}{d t} = \lambda u, \quad u(0) = c
+\end{equation*}
+where we now assume $\lambda, c, u(t) \in \C$. Let us suppose that 
+we make a small error in prescribing $c$
+ and instead of $u$ we compute $u_\epsilon$ that 
+solves 
+\begin{equation*}
+    \frac{d u_\epsilon}{d t} = \lambda u_\epsilon, \quad u_\epsilon(0) = c_\epsilon. 
+\end{equation*}
+Here $\epsilon$ is a parameter and we have in mind a setting where 
+$u(t) - u_\epsilon(t)$ is small. Then the difference between 
+the true solution and the perturbed solution satisfies the ODE 
+\begin{equation*}
+    \frac{d (u - u_\epsilon) }{d t} = \lambda (u - u_\epsilon), 
+    \qquad (u - u_\epsilon)(0) = c - c_\epsilon.
+\end{equation*}
+Our hope is that for large $t$ the difference $u - u_\epsilon$ vanishes. 
+This is clearly the case for the ODE provided that $\Re(\lambda) < 0$. 
+Then we can ask whether a numerical scheme also satisfies this 
+property? i.e., do small errors made along the way vanish after 
+some time? or do they get amplified and corrupt the whole 
+solution?
 
-% \bibliographystyle{plainnat}
-% \bibliography{references}
+Applying forward Euler to the above ODE we obtain the sequence 
+\begin{equation*}
+    (u - u_\epsilon)_n = (u - u_\epsilon)_{n-1} 
+    + \Delta t \lambda (u - u_\epsilon)_{n-1} 
+    = ( 1 + \Delta t \lambda) ( u - u_\epsilon)_{n-1}, 
+\end{equation*}
+which in turn implies that 
+\begin{equation*}
+    (u - u_\epsilon)_n = (1 + \Delta t \lambda)^n (u - u_\epsilon)_0.
+\end{equation*}
+Now if we consider $| (u - u_\epsilon)_n|$ we realize that the 
+magnitude of the error will remain controlled as $n \to \infty$ only if 
+$| (1 + \Delta t \lambda) | \le 1$. This translates into a restriction
+on how large $\Delta t$ can be if we want to control spurious 
+oscialltions in our numerical solution.
