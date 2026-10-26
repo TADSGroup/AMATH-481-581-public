@@ -1,4 +1,164 @@
-\chapter{Solving Poisson's equation}
+\chapter{Higher order methods II: 
+The Linear Multi-Step Methods}
+
+In the last lecture we saw the family of Runge-Kutta 
+methods which fall under the category of 
+1-step methods since the estimation of $u_n$ only 
+depends on the value of $u_{n-1}$. {\it Note that 
+there is a point of confusion here since a 
+Runge-Kutta scheme still involves additional steps 
+in computing $u_n$, e.g., RK4 involves three 
+intermediate values, however, all of those 
+additional steps only used $u_n$ and they do not 
+involve $u_{n-2}, u_{n-3}, \dots$ and so on. }
+
+In contrast to the above, we will discuss the 
+class of Linear Multi-step Methods (LMM) in this 
+lecture. As the name suggests these are 
+methods that estimate $u_n$ from multiple previous 
+estimates $u_{n-1}, u_{n-2}, u_{n-3}, \dots$. 
+
+
+\section{The 1- and 2-step methods}
+To convey the idea behind LMMs we will first focus on the 
+cases of one and two step methods. Let us introduce 
+the shorthand notation $f_n = f(t_n, u_n)$; note this is 
+different from $f(t_n, u(t_n))$ which involves the true solution 
+$u(t_n)$. Then a 1-step method is a rule for computing $u_n$ 
+in terms of $u_{n-1}$ and $f_{n-1}$. In this sense, the forward 
+Euler method 
+\begin{equation*}
+    u_n = u_{n-1} + \Delta t f_{n-1}
+\end{equation*}
+and Backward Euler method
+\begin{equation*}
+    u_n = u_{n-1} + \Delta t f_{n}
+\end{equation*}
+are 1-step methods. A 2-step method involves $u_n, u_{n-1}, u_{n-2}$ 
+as well as $f_n, f_{n-1}, f_{n-2}$. An example of this 
+family that we have already encountered in the homeworks are
+the 2-step Adams-Bashforth and Adams-Moulton methods 
+\begin{equation*}
+    \begin{aligned}
+            & \text{(Adams-Bashforth, explicit)}  &u_{n} =  u_{n-1} + \frac{\Delta t}{2} \left( 3 f_{n-1} - f_{n-2} \right) \\ 
+        & \text{(Adams-Moulton, implicit)}  &u_{n} = u_{n-1} + \frac{\Delta t}{12} \left( 
+         5 f_{n} + 8 f_{n-1} - f_{n-2}   
+        \right)  
+    \end{aligned}
+\end{equation*}
+Notice that the 2-step methods have a property that we 
+have not encountered before, i.e.,{\it  
+they are not self starting}. We can only use these methods 
+to compute $u_n$ for $n \ge 2$ since applying the method 
+for $n=1$ involves $u_{-1}$ which is undefined. Therefore
+LMM methods of $2$-step and higher often need some other 
+method to compute $u_1$ before they can be used to 
+compute the rest of the sequence. For this 
+we typically use a forward Euler step or a more 
+accurate Runge-Kutta scheme to start the LMM iterations.
+
+The family of 1-step LMMs can be constructed by 
+considering equations of the form 
+\begin{equation*}
+    v(t + \Delta t) + \alpha_0 v(t) 
+    = \Delta t \Big( \beta_1 v'(t + \Delta t) + \beta_0 v'(t) \Big) 
+    + \mathcal{O}(\Delta t^{p+1})
+\end{equation*}
+for sufficiently smooth functions $v$. Different choices of $\alpha_0$, 
+$\beta_1, \beta_0$ yield different methods. The idea is that 
+we want to choose these coefficients so that the approximation 
+is of a prescribed order $p$ or obtains the maximal possible 
+order. For example,
+\begin{equation*}
+    (\alpha_0, \beta_0, \beta_1) = (-1, 1, 0) \qquad 
+    v(t + \Delta t) - v(t) = \Delta t v'(t) + \mathcal{O}(\Delta t^{2}),
+\end{equation*}
+which, once we set $v = u$ and $t = t_{n-1}$, gives the forward Euler scheme with 
+$p=1$. Notice that $p=1$ is precisely the order of consistency 
+of forward Euler and this is not a coincidence. 
+Similarly, 
+\begin{equation*}
+        (\alpha_0, \beta_0, \beta_1) = (-1, 0, 1) \qquad 
+    v(t + \Delta t) - v(t) = \Delta t v'(t + \Delta t) 
+    + \mathcal{O}(\Delta t^{2}),
+\end{equation*}
+which, once we set $v = u$ and $t = t_{n-1}$, gives the backward Euler scheme. 
+Finally, 
+\begin{equation*}
+    (\alpha_0, \beta_0, \beta_1) = (-1, 1/2, 1/2) \qquad 
+    v(t + \Delta t) - v(t) = 
+    \frac{\Delta t}{2} \Big( v'(t+\Delta t) + v'(t) \Big)
+    + \mathcal{O}(\Delta t^{3}),
+\end{equation*}
+which we recognize, after the same substitution as above, 
+ as the implicit Trapezoid method which is second order. 
+
+We can extend the above idea to the 2-step family. More precisely, 
+consider equations of the form 
+\begin{equation*}
+    v(t + 2\Delta t) + \alpha_1 v(t + \Delta t) + \alpha_0 v(t)
+    = \Delta t \Big[ \beta_2 v'(t + 2 \Delta t) 
+    + \beta_1 v'(t + \Delta t) 
+    + \beta_0 v'(t)  \Big] + \mathcal{O}(\Delta t^{p+ 1}).
+\end{equation*}
+Once again, the idea is to pick the constants $\alpha_j, \beta_j$ 
+is such a way that we obtain a desired order $p$ or the maximal 
+possible. Our observation above regarding the order 
+of consistency of the methods remains valid; see 
+\cite[Sec.~4]{griffiths2010numerical}. {\it Generally speaking, 
+the exponent $p$ in the above expression coincides 
+with the order of consistency of the resulting LMM solver.}
+
+The choice of the $\alpha_j, \beta_j$ coefficients 
+is guided by Taylor expansion of the function $v$. 
+We have   
+\begin{equation}\label{l12:disp1}
+   % \begin{aligned}
+        v(t + \Delta t) = v(t) + \Delta t v'(t) 
+        + \frac{1}{2} \Delta t^2 v''(t) + \mathcal{O}(\Delta t^3).
+   % \end{aligned}
+\end{equation}
+If we further use the expansion 
+\begin{equation}\label{l12:disp2}
+    v'(t - \Delta t) = v'(t) - \Delta t v''(t) + \mathcal{O}(\Delta t^2),
+\end{equation}
+which implies $ \Delta t v''(t) = v'(t) - v'(t - \Delta t) 
++ \mathcal{O}(\Delta t^2)$. 
+Substitute this  back into \eqref{l12:disp1} we obtain 
+\begin{equation*}
+    v(t + \Delta t) = v(t) + 
+    \Delta t v'(t) + \frac{\Delta t}{2} \Big( v'(t) - 
+    v'(t - \Delta t)\Big)
+    + \mathcal{O}(\Delta t^3)
+\end{equation*}
+which after re-organizing the terms takes the form 
+\begin{equation*}
+    v(t + \Delta t) = v(t) + \frac{\Delta t}{2} \left( 3 v'(t) - v'(t - \Delta t) 
+    \right)
+\end{equation*}
+Now take $v(t) = u(t)$ and $t_n = t + \Delta t$, $t_{n-1} = t$ and 
+$t_{n-2} = t - \Delta t$ to see that the resulting scheme is precisely 
+tha Adams-Bashforth scheme.
+
+\begin{quote}
+    The idea behind the construction is as follows: We would like 
+    \eqref{l12:disp1} to be accurate up to $\mathcal{O}(\Delta t^3)$ but 
+    we do not want to evaluate $v''(t)$. We are however comfortable 
+    with evaluating $v(t)$ as well as $v'(t)$, since for the 
+    ODE these are $u(t)$ and $f(t, u(t))$. Hence we approximate 
+    $v''$ in terms of $v'$. 
+\end{quote}
+
+If we repeat the above calculation with  
+with an expansion of $v'(t + \Delta t)$ used in the place of 
+\eqref{l12:disp2} the resulting method 
+coincides with the implicit Trapezoid method. Even though 
+this is a 1-step method it is the analogue of the 2-step 
+Adams-Bashforth in the sense of the above derivation.
+To derive Adams-Moulton, we need to extend the Taylor 
+expansion \eqref{l12:disp1} to keep the $v'''$ term and 
+then use centered difference formulae to approximate $v''(t)$ 
+and $v'''(t)$ since that method turns out to be third order accurate.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
