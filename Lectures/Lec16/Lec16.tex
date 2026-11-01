@@ -1,6 +1,158 @@
 \chapter{Finite Difference Methods}
 
+Motivated by the example from last lecture we now outline 
+the general framework of Finite Difference 
+Methods (FDM) for solving BVPs. 
+
+\section{General Structure of a Finite Difference Method}
+
+The family of FDMs for BVPs have a common three step 
+structure: 
+
+\begin{itemize}
+    \item Step 1: Pick a discretization grid or mesh, i.e., 
+    a set of points $\{ t_0, \dots, t_N \} \subset [a, b]$
+    \item Step 2: Discretize the differential equation using 
+    difference formulae
+    \item Step 3: Formulate and assemble a linear or nonlinear 
+    system of algebraic equations and solve it  
+\end{itemize}
+
+\begin{example}\label{ex:l16:poisson}
+    We already performed these steps for our toy BVP 
+    \begin{equation*}
+        u''(t) = f(t), \quad u(0) = c_0, \quad u(1) = c_1.
+    \end{equation*} 
+    Let us recall them for context. 
+    \begin{itemize}
+        \item Step 1: we may choose a uniform grid on 
+        the interval $[0,1]$. So we set  
+        $t_n = n \Delta t$ for $n = 0, 1, 2, \dots, N$ 
+        and $\Delta t = 1/N$. 
+        
+        \item Step 2: Since we impose Dirichlet B.C. there is 
+        no approximation to do there. We only need to 
+        discretize $u''$. Let $u_0, \dots, u_N$ denote 
+        the numerical solutions s.t. $u_n \approx u(t_n)$. 
+        Then we write 
+        \begin{equation}\label{eq:l16-poisson}
+            u''(t_n) \approx \frac{u_{n-1} - 2 u_n + u_{n+1}}{\Delta t^2}.
+        \end{equation} 
+
+        \item Step 3: Substituting the approx difference formula in
+        the BVP and combining with the B.C. gives the system of 
+        equations 
+        \begin{equation*}
+            \begin{aligned}
+                u_0  & = c_0 \\ 
+                \frac{1}{\Delta t^2} ( u_{n-1} - 2 u_n + u_{n+1})  &= f_n, \qquad n =1, \dots, N-1 \\ 
+                u_N & = c_1.
+            \end{aligned}
+        \end{equation*}
+        Now rewrite this system as a matrix equation 
+        \begin{equation*}
+            A \ub = \fb,
+        \end{equation*}
+        and compute $\ub = A^{-1} \fb$.
+    \end{itemize}
+    We show an example of solutions obtained through this framework 
+    in \Cref{fig:l16:poisson-example}. We used homogeneous 
+    Dirichlet conditions here with a smooth $f$ 
+    in which case the problem has an analytic solution. This 
+    allows us to investigate the convergence properties of 
+    the method, in particular, plot the error 
+    $e_N = \max_n |u_n - u(t_n)|$ as a function of the 
+    number of grid points $N$. We see that $e_N =
+     \mathcal{O}(N^{-2}) = \mathcal{O}(\Delta t^2)$. 
+     This is not surprising since the centered difference formula 
+     we used to approximate $u''$ is indeed second order accurate, 
+     i.e., 
+     \begin{equation*}
+        \frac{1}{\Delta t^2} (u_{n-1} - 2 u_n + u_{n+1})
+        = u''(t) + \mathcal{O}(\Delta t^2).
+     \end{equation*}
+
+    \begin{figure}
+        \centering
+        \includegraphics[width = 0.48 \textwidth]{./Lectures/Lec16/fd_toy_bvp.png} 
+        \includegraphics[width = 0.48 \textwidth]{./Lectures/Lec16/fd_toy_bvp_convergence.png} 
+        \caption{An example solution of \eqref{eq:l16-poisson} 
+        using FDM with $f(t) = - \exp( - \frac{1}{2 \sigma^2} | t - 1/2|^2)$ 
+        taken to be a Gaussian bump with $\sigma = 0.1$. The left figure
+        shows the numerical solutions for different choices of $N$ 
+        while the right plot shows the error between the numerical 
+        and analytic solution forthis problem. Notice that the error 
+        decays quadratically in the number of grid points.}
+        \label{fig:l16:poisson-example}
+    \end{figure}
+\end{example}
+
+The choice of the difference formula used to 
+approximate the derivative $u''$ facilitates 
+different FDMs. For example, let us now consider 
+a more general form of our second order ODE
+but now with an additional first order derivative. 
+
+\begin{example}
+    Consider the BVP 
+    \begin{equation}\label{eq:l16:adv-diff}
+        - u''(t) + 2 u'(t) = f(t), \qquad u(0) = u(1) = 0.
+    \end{equation}
+    For $f$ we will use 
+    $f(t) = \exp( - \frac{1}{2 \sigma^2} | t - 1/2|^2) $ 
+    with $\sigma = 0.1$. Let us proceed through the steps. 
+    \begin{itemize}
+        \item Step 1: As before we simply take $t_n = n \Delta t$ with 
+        $\Delta t = 1/N$. 
+        \item Step 2: We use the same centered difference 
+        formulat for $u''$ but we use forward Euler for the $u'$ term, i.e., 
+        \begin{equation*}
+            \begin{aligned}
+                -\frac{1}{\Delta t^2} (u_{n-1} - 2u_n + u_{n+1} )
+                +  2 \cdot \frac{1}{\Delta t} (u_{n+1} - u_n) = f_n.
+            \end{aligned}
+        \end{equation*}
+        \item Step 3: Let $A$ denote the centered difference matrix from before. 
+        Define the new matrix
+        \begin{equation*}
+            B = \frac{1}{\Delta t} \cdot 
+            \begin{bmatrix}
+                0 & 0 & 0 &  &\cdots  & 0 \\
+                0 & -1 & 1 & 0 & \cdots & 0 \\ 
+                0  &  0 & \ddots & \ddots & \cdots & 0 \\ 
+                0 & \cdots & 0 & 0 & -1 & 1  \\ 
+                0 & \cdots & & 0 & 0 & 0
+            \end{bmatrix}
+        \end{equation*}
+        that corresponds to the additional $u'$ term. 
+        Then define $D = -A + 0.1 B$ and solve the system 
+        \begin{equation*}
+            D \ub = \fb.
+        \end{equation*}
+        We present similar numerical results to the 
+        previous example in \Cref{fig:l16:adv-diff}. 
+        Notice that this time the rate of 
+        convergence is slow, in fact, it is only 
+        $\mathcal{O}(N) = \mathcal{O}(\Delta t)$, 
+        and so the method we designed is first order convergent. 
+        As we will see later, this is due to the fact that 
+        we used a first order approximation to $u'$ which 
+        limits the convergence rate of our algorithm.
+
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.48 \textwidth]{./Lectures/Lec16/fd_advection_bvp.png}
+            \includegraphics[width=0.48 \textwidth]{./Lectures/Lec16/fd_advection_bvp_convergence.png}    
+            \caption{Numerical solution of the BVP \eqref{eq:l16:adv-diff} 
+            with homogeneous Dirichlet B.C. mirroring the 
+            results from \Cref{ex:l16:poisson}. Notice that the rate of 
+            convergence is now 1 rather than 2.}
+            \label{fig:l16:adv-diff}       
+        \end{figure}
+    \end{itemize}
+\end{example}
 
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+
+% \bibliographystyle{plainnat}
+% \bibliography{references}
