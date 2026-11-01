@@ -1,4 +1,148 @@
-\chapter{Elliptic, parabolic, and hyperbolic PDEs and some motivating examples}
+\chapter{Motivating Numerical Methods for BVPs}
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+Up to this point in the course we primarily focused on the 
+solution of IVPs, i.e., ODEs with initial conditions 
+prescribed at a given point in time which we then solved 
+using time-marching methods. In this sense, IVPs have a 
+natural interpretation as dynamic phenomenon being simulated
+forward in time. We now turn our attention to BVPs, i.e., 
+problem of the form 
+\begin{equation*}
+    \frac{d^n}{dt^n} u = f  \left(t, u, \frac{d u }{dt}, 
+    \dots, \frac{d^{n-1} u }{dt^{n-1}} \right), \quad a < t < b, 
+\end{equation*}
+subject to boundary conditions 
+\begin{equation*}
+   {\mbf g}(u, a, b) = 0.
+\end{equation*}
+We will mostly focus on particular boundary conditions shortly. 
+The difficulty with BVPs is that their analytic solutions 
+are in general difficult to write down and they differ from 
+IVPs in nature. Essentially, there is no sense of "marching 
+forward in time" since we can impose the boundary conditions 
+at various time points. 
+
+As a prototypical BVP we shall consider Poisson's equation in 
+1D: 
+\begin{equation}\label{eq:l15:poisson}
+    \frac{d^2 u}{dt^2} = f(t), \quad t \in (0, 1),
+\end{equation}
+subject to the homogeneous Dirichlet boundary conditions 
+\begin{equation*}
+    u(0) = c_0, \qquad u(1) = c_1. 
+\end{equation*}
+This equation models many phenomenon in physics, such as 
+the steady state distribution of heat in a long 
+beam. Proceeding as we did for ODEs before we can rewrite 
+this problem as a system of ODEs:
+\begin{equation}
+    \frac{d u}{d t} = z, \qquad \frac{d z}{d t} = 
+    f(t),
+\end{equation}
+but we quickly realize that we have no initial conditions for 
+$z$ and it is unclear how to impose $u(1) = u_1$. Essentially, 
+our previous numerical methods are no longer applicable. 
+
+Regardless, the mathematical ideas behind IVP solvers, 
+i.e., approximating derivatives towards obtaining algebraic 
+equations that we could then solve easily, remain useful. 
+To be more precise, we can approximate 
+\begin{equation*}
+    \frac{d^2 u}{dt^2}(t) \approx 
+    \frac{u(t - \Delta t) - 2 u(t) + u(t + \Delta t)}{\Delta t ^2}
+    = \frac{u_{n-1} - 2 u_n + u_{n+1}}{\Delta t^2},
+\end{equation*}
+and substitute in \eqref{eq:l15:poisson} to obtain, with 
+the boundary conditions, the system of equations 
+\begin{equation}\label{eq:l15:Poisson-Fd}
+   \begin{aligned}
+        u_0 & = c_0 \\
+        \frac{u_{n-1} - 2 u_n + u_{n+1}}{\Delta t^2} &= 
+        f_n, \quad n=1, \dots, N-1, \\ 
+        u_{N} &= c_1
+   \end{aligned}
+\end{equation}
+where we used our notation from previous lectures with, 
+$t_n = n \Delta t$,  
+$f_n = f(t_n)$, and $N$ denoting total number of 
+time steps. Note that this is a linear system of algebraic equations,
+indeed we have $N+1$ equations and $N+1$ unknowns which implies 
+that the system is square and may be uniquely solvable. 
+
+Indeed, write 
+\begin{equation*}
+    A = \begin{bmatrix}
+    1 & 0 & 0 & 0 & \dots & 0 \\ 
+    1 & -2 & 1 & 0 &\dots & 0 \\
+    0 & 1 & -2 & 1 & \dots & 0 \\ 
+    0 & 0 & \ddots & \ddots & \ddots & \\     
+    0 & \dots  & 0 &1  &-2 & 1 \\
+    0 & \dots &  0 & 0 & 0 & 1
+    \end{bmatrix} \in \R^{N+1 \times N+1}, 
+    \qquad 
+    \fb = \begin{bmatrix}
+        c_0 \\ 
+        f_1 \\
+        f_2 \\ 
+        \vdots \\
+        f_{N-1} \\ 
+        c_1
+    \end{bmatrix} \in \R^{N+1},
+\end{equation*}
+as well as $\ub = (u_0, \dots, u_N) \in \R^{N+1}$. Then we 
+simply need to solve 
+\begin{equation*}
+    A \ub = \fb.
+\end{equation*}
+A direct calculation reveals that the matrix $A$ is indeed 
+invertible and so $\ub$ can be computed uniquely using 
+standard techniques from linear algebra, e.g., 
+LU or QR factorizations, iterative methods, Gaussian elimination, etc.
+
+Notice that the fundamental difference between IVPs and 
+BVPs is readily revealed. While in IVPs we compute $u_{n+1}$ 
+in terms of $u_n$, or more broadly $u_0, \dots, u_{n-1}$. 
+Here we compute the entire solution vector $\ub$ all at once
+and so there is no sense of marching forward in time. 
+
+Through this part of the course we primarily focus on 
+second order BVPs of the form 
+\begin{equation*}
+    \frac{d^2 u}{dt^2} = f\left(t, u, \frac{d u}{dt} \right),
+    \quad t \in (a, b)
+\end{equation*}
+equipped with four types of boundary conditions: 
+\begin{itemize}
+    \item {\it Dirichlet's B.C.}, named after Peter 
+    Dirichlet:
+    \begin{equation*}
+        u(a) = c_a, \qquad u(b) = c_b.
+    \end{equation*} 
+    \item {\it Neumann's B.C.}, named after Carl Neumann: 
+    \begin{equation*}
+        u'(a) = c_a, \qquad u'(b) = c_b.
+    \end{equation*}
+    \item {\it Robin's B.C.}, named after Victor Robin:
+    \begin{equation*}
+        u'(a) = \alpha_a u(a) + \beta_a, \qquad 
+        u'(b) = \alpha_b u(b) + \beta_b.
+    \end{equation*}
+    \item {\it Periodic B.C.}:
+    \begin{equation*}
+    u(a) = u(b), \qquad u'(a) = u'(b).     
+    \end{equation*}
+\end{itemize}
+We will allow for the Dirichlet, Neumann, and Robin 
+conditions to be mixed and matched, e.g., we have Dirichlet 
+at $a$ but Robin at $b$ and so forth.
+
+\begin{quote}
+    Our goal is to construct algorithms that compute consistent 
+    approximations to the true solution $u(t)$, i.e., 
+    $u_n \to u(t_n)$ as $\Delta t \downarrow 0$. We shall 
+    further ask for rates of convergence just as we did 
+    before for IVPs.
+\end{quote}
+
+% \bibliographystyle{plainnat}
+% \bibliography{references}
