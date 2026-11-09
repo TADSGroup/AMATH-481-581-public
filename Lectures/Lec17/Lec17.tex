@@ -283,35 +283,27 @@ following our derivation of the difference formulae.
         b(t_j) u'(t_j) \approx (B \ub)_j \qquad 
         B = \frac{1}{2 \Delta t} 
         \begin{bmatrix}
-            0 & & & & & & \\ 
-            -b_1 &  0     & b_1 & & & & \\ 
-                 & - b_2  & 0   & b_2 & & & \\ 
-                 &        & \ddots & \ddots & \ddots & & \\ 
-                 &   &  & -b_{N-2}   & 0 &b_{N-2} & \\
-                 &   &  &  & -b_{N-1}   & 0 &b_{N-1} \\
-                 & & & & & & 0
+            0      &        &           &         &         \\ 
+            -b_1   & 0      & b_1       &         &         \\ 
+                   & \ddots & \ddots    & \ddots  &         \\ 
+                   &        & -b_{N-1}  & 0       & b_{N-1} \\
+                   &        &           &         & 0
         \end{bmatrix}
     \end{equation*}
     \item {\bf The $(a u')'$ term:} For this term we simply 
     write \eqref{eq:l17:diffusion-op} in matrix form 
     by ignoring the boundary terms once more, 
-    {\scriptsize
     \begin{equation*}
-        \begin{aligned}
-        &(a u')'(t_j) \approx (A \ub)_j,\\ 
-        &A = \frac{1}{\Delta t^2} 
+        (a u')'(t_j) \approx (A \ub)_j, \qquad 
+        A = \frac{1}{\Delta t^2} 
         \begin{bmatrix}
-            0 & & & & & &  \\
-            a_{1-1/2} & -(a_{1-1/2} + a_{1+1/2}) & a_{1 + 1/2} & &  \\
-                      & a_{2 - 1/2} & -(a_{2 -1/2 } + a_{2 + 1/2}) & a_{2 + 1/2}&  \\
-                      &       \ddots        & \ddots & \ddots &    \\
-                      &  a_{N-2 - 1/2} & -(a_{N-2 - 1/2} + a_{N-2 + 1/2})  & a_{N-2 + 1/2} &  \\
-                      &   & a_{N-1-1/2} & -(a_{N - 1-1/2} + a_{N-1 +1/2})  & a_{N-1+1/2}   \\
-                                                                                & & & &   0
+            0         &                          &                              &                              &              \\
+            a_{1/2}   & -(a_{1/2} + a_{3/2})     & a_{3/2}                      &                              &              \\
+                      & \ddots                   & \ddots                       & \ddots                       &              \\
+                      &                          & a_{N-3/2}                    & -(a_{N-3/2} + a_{N-1/2})     & a_{N-1/2}    \\
+                      &                          &                              &                              & 0
         \end{bmatrix}
-    \end{aligned}
     \end{equation*}
-    }
     \item {\bf The boundary conditions:} Finally, using the 
     one sided formulae for the derivatives on the boundary
     we can approximate the boundary operators, reading off of
@@ -320,12 +312,11 @@ following our derivation of the difference formulae.
     \begin{equation*}
         R = 
         \begin{bmatrix}
-         \frac{-3 a_0}{2 \Delta t} - \alpha_0 & 
-        \frac{2 a_0}{\Delta t} & -\frac{a_0}{2 \Delta t}  &  & \\ 
-        & 0 &  & & \\
-        &   & \ddots & & \\
-        & &   & 0 & \\ 
-        & & \frac{a_N}{2 \Delta t} & -\frac{2 a_N}{\Delta t} & \frac{3 a_N}{2 \Delta t} - \alpha_1         
+            \frac{-3 a_0}{2 \Delta t} - \alpha_0 & \frac{2 a_0}{\Delta t} & -\frac{a_0}{2 \Delta t} &        &                        &                          &                                       \\[4pt]
+                                                & 0                      &                         &        &                        &                          &                                       \\
+                                                &                        &                         & \ddots &                        &                          &                                       \\
+                                                &                        &                         &        &                        & 0                        &                                       \\[2pt]
+                                                &                        &                         &        & \frac{a_N}{2 \Delta t} & -\frac{2 a_N}{\Delta t}  & \frac{3 a_N}{2 \Delta t} - \alpha_1
         \end{bmatrix},
     \end{equation*}
     Notice that this matrix is zero everywhere
