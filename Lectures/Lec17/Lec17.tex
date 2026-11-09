@@ -322,13 +322,17 @@ following our derivation of the difference formulae.
         \begin{bmatrix}
          \frac{-3 a_0}{2 \Delta t} - \alpha_0 & 
         \frac{2 a_0}{\Delta t} & -\frac{a_0}{2 \Delta t}  &  & \\ 
-        & & & & \\ 
+        & 0 &  & & \\
+        &   & \ddots & & \\
+        & &   & 0 & \\ 
         & & \frac{a_N}{2 \Delta t} & -\frac{2 a_N}{\Delta t} & \frac{3 a_N}{2 \Delta t} - \alpha_1         
         \end{bmatrix},
     \end{equation*}
-    Notice that this matrix is zero everywhere except for the first and last rows. 
-    Then $R \ub$ returns a vector which is only nonzero in its 
-    first and last entries. 
+    Notice that this matrix is zero everywhere
+     except for the first and last rows. 
+    Then $R \ub$ returns a vector which is only 
+    nonzero in its first and last entries that 
+    correspond to the boundary conditions. 
 \end{itemize}
 Finally, write 
 \begin{equation*}
