@@ -1,4 +1,348 @@
-\chapter{Solving the Variable Coefficients Poisson Equation}
+\chapter{Solving a Variable Coefficient Second 
+Order BVP}
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+In this lecture we will derive a second order FDM method 
+for solving a variable coefficients BVP to show various 
+important considerations and ideas that are 
+involved in these problems beyond the toy 
+examples we have seen so far. Consider 
+the BVP 
+\begin{equation*}
+    - \frac{d}{dt} \left( 
+       a(t) \frac{d u}{dt} (t)
+    \right) 
+    + b(t) \frac{d u}{dt} (t)
+    + c(t) u (t) = f(t), \qquad t \in (0,1) 
+\end{equation*}
+where $a, b, c, f$ are given functions,
+subject to the Robin boundary conditions 
+\begin{equation*}
+    a(0)\frac{du}{dt}(0) = \alpha_0 u(0) + \beta_0,
+    \qquad 
+    a(1)\frac{du}{dt}(1) = \alpha_1 u(1) + \beta_1,
+\end{equation*}
+with given coefficients $\alpha_0, \alpha_1, 
+\beta_0, \beta_1$. 
+This problem mostly contains every feature we 
+need to deal with when solving 
+a linear second order BVP. 
+
+We will proceed in our usual three step approach: 
+
+\section*{Step 1: A uniform grid}
+We proceed with a uniform grid on the interval 
+$[0,1]$ where $t_j = j \Delta t$ for $j=0, \cdots, N$ 
+and $\Delta t = 1/N$. Later we will augment 
+this grid with a pair of so-called ghost points 
+that help us impose gradient conditions on 
+the boundary points. To this end, we also 
+consider the points $t_{-1} = - \Delta t$ and $t_{N+1} = 1+ \Delta t$; 
+see \Cref{fig:uniform-grid-plus-ghost-points}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics{./Lectures/Lec17/grid_ghost_points.pdf}
+    \caption{The uniform grid $t_j = j \Delta t$, $j = 0, \dots, N$, on $[0,1]$.
+    The boundary points $t_0 = 0$ and $t_N = 1$ are shown as black dots
+    and the ghost points $t_{-1}$ and $t_{N+1}$ as red crosses.}
+    \label{fig:uniform-grid-plus-ghost-points}
+\end{figure}
+
+\section*{Step 2: Discretize the BVP}
+We will choose a discretization of the 
+BVP by replacing all differential operators
+with second order accurate difference formulae. 
+
+Let us start with the $0$-order term, which 
+is effectively  trivial to discretize
+\begin{equation}\label{eq:l17:diag-op}
+    c(t_j)u(t_j) 
+    \approx c_j u_j
+\end{equation}
+where we simply wrote $c_j = c(t_j)$.
+
+Next consider the first order term 
+\begin{equation*}
+    b \frac{d u}{dt},
+\end{equation*}
+to discretize this term we only need to approximate
+$u'$ and for this we choose a centered difference formula 
+which is second order accurate 
+\begin{equation}\label{eq:l17:adv-op}
+    b(t_j) \frac{d u}{dt}(t_j)
+    = b(t_j) \frac{u(t_{j+1}) - u(t_{j-1})}
+    {2 \Delta t} + \mathcal{O}(\Delta t^2)
+    \approx b_j \frac{u_{j+1} - u_{j-1}}{2 \Delta t},
+\end{equation}
+where again we wrote $b_j = b(t_j)$.
+
+Next consider the second order term 
+\begin{equation*}
+    \frac{d}{d t} \left( a \frac{d u}{dt} \right).
+\end{equation*}
+To discretize this term we need to take 
+some care since we prefer to 
+avoid differentiating the coefficient 
+$a$. 
+\begin{figure}[htp]
+    \centering
+    \includegraphics{./Lectures/Lec17/diffusion_stencil.pdf}
+    \caption{Zoomed in view of the grid around $t_j$ showing the 
+    two applications of the centered difference formula used to 
+    discretize the diffusion term. The coefficient $a$ is sampled 
+    on the staggered grid $t_{j\pm 1/2}$ (hollow blue squares). 
+    In the first level (blue) the grid values $u_{j-1}, u_j, u_{j+1}$
+    (black dots) are combined to approximate $a u'$ at the midpoints. 
+    In the second level (red) these midpoint values are combined 
+    to approximate $(a u')'$ at $t_j$.}
+    \label{fig:diffusion-centered-stencile}
+\end{figure}
+
+We start by using centered 
+difference formulae to estimate the value of 
+$u'$ at the midpoints $t_{j+1/2} = t_j + \Delta t/2$ 
+and $t_{j-1/2} = t_j - \Delta t/2$
+(see \Cref{fig:diffusion-centered-stencile}), i.e., 
+\begin{equation*}
+    \begin{aligned}
+    \frac{d u}{dt}(t_{j+1/2})
+    & = \frac{u(t_{j+1}) - u(t_j)}{\Delta t}
+    - \frac{\Delta t^2}{24} u'''(t_{j+1/2})
+    + \mathcal{O}(\Delta t^4) \\
+    \frac{d u}{dt}(t_{j-1/2})
+    & = \frac{u(t_{j}) - u(t_{j-1})}{\Delta t}
+    - \frac{\Delta t^2}{24} u'''(t_{j-1/2})
+    + \mathcal{O}(\Delta t^4)        
+    \end{aligned}
+\end{equation*}
+Note that the remainder terms are $\mathcal{O}(\Delta t^4)$
+rather than $\mathcal{O}(\Delta t^3)$ since the centered
+difference formula only produces even powers of $\Delta t$
+in its error expansion.
+Now multiply these expressions by 
+$ a_{j+1/2} = a(t_{j+1/2}) $ and 
+$ a_{j-1/2}= a(t_{j-1/2})$ in that 
+order  so that we have 
+\begin{equation*}
+\begin{aligned}
+    \left( a \frac{d u}{dt} \right)(t_{j+1/2})
+& = a_{j+1/2}
+ \left( \frac{u(t_{j+1}) - u(t_j)}{\Delta t} \right)  
+ - \frac{\Delta t^2}{24} a_{j+1/2}  u'''(t_{j+1/2}) 
++ \mathcal{O}(\Delta t^4)\\ 
+   \left( a \frac{d u}{dt} \right)(t_{j-1/2}) 
+& = a_{j-1/2}
+ \left( \frac{u(t_{j}) - u(t_{j-1})}{\Delta t} \right)  
+ - \frac{\Delta t^2}{24} a_{j-1/2}  u'''(t_{j-1/2}) 
+  + 
+ \mathcal{O}(\Delta t^4).
+\end{aligned}
+\end{equation*}
+Then applying the centered difference formula once more,
+this time centered at $t_j$ with step $\Delta t/2$, 
+to the function $F = a u'$ we have
+\begin{equation*}
+    F'(t_j) = \frac{F(t_{j+1/2}) - F(t_{j-1/2})}{\Delta t}
+    - \frac{\Delta t^2}{24} F'''(t_j) + \mathcal{O}(\Delta t^4).
+\end{equation*}
+Substituting the expressions for $F(t_{j\pm 1/2})$ from above
+requires some care since the error terms
+get divided by $\Delta t$ and one may worry that we lose
+an order of accuracy. This does not happen: 
+the $\mathcal{O}(\Delta t^4)$ remainders become $\mathcal{O}(\Delta t^3)$,
+while the leading error terms appear as a difference, 
+\begin{equation*}
+    - \frac{\Delta t^2}{24} 
+    \frac{a_{j+1/2} u'''(t_{j+1/2}) - a_{j-1/2} u'''(t_{j-1/2})}{\Delta t}
+    = - \frac{\Delta t^2}{24} (a u''')'(t_j) + \mathcal{O}(\Delta t^4)
+    = \mathcal{O}(\Delta t^2),
+\end{equation*}
+where we used the centered difference formula once again, now 
+applied to the function $a u'''$. Putting everything together
+we obtain
+\begin{equation*}
+    \begin{aligned}
+    \frac{d}{dt} \left( a \frac{du}{dt}  \right)(t_j)
+    &= \frac{1}{\Delta t}
+    \left[ 
+    a(t_{j+1/2})    
+    \left( \frac{u(t_{j+1}) - u(t_j)}{\Delta t} \right)
+    - 
+    a(t_{j-1/2})    
+    \left( \frac{u(t_{j}) - u(t_{j-1})}
+    {\Delta t} \right)
+    \right] 
+    + \mathcal{O}(\Delta t^2) \\
+     &\approx \frac{1}{\Delta t^2} 
+     \left[ a_{j+1/2} (u_{j+1} - u_j) 
+     - a_{j-1/2} ( u_j - u_{j-1})  \right]
+    \end{aligned}
+\end{equation*}
+In summary, we have the second order approximation 
+\begin{equation}\label{eq:l17:diffusion-op}
+    \frac{d}{dt} \left( a \frac{du}{dt} \right) (t_j)
+\approx    \frac{1}{\Delta t^2} 
+     \left[ a_{j+1/2} u_{j+1} 
+     - (a_{j+1/2} + a_{j-1/2}) u_j 
+        + a_{j-1/2} u_{j-1}
+     \right].
+\end{equation}
+Notice that if $a = 1$ then this formula reduces
+to the usual centered difference approximation 
+to $u''$. 
+
+Now we consider the boundary conditions. Since Robin 
+conditions involve $u'$ at $t_0$ and $t_N$
+then we need to approximate those values 
+using second order formulae. This means we have 
+two options: 
+
+\begin{itemize}
+    \item {\bf (Option 1: One-sided differences)}
+    We simply use one-sided formulae to approximate $u'(t_0)$ and 
+    $u'(t_N)$: 
+    \begin{equation*}
+        \begin{aligned}
+        u'(t_0) & = \frac{ - 3 u(t_0) + 4 u(t_1) - u(t_2)}{2 \Delta t} 
+        + \mathcal{O}(\Delta t^2), \\
+        u'(t_N) & = \frac{3 u(t_N) - 4 u(t_{N-1}) + u(t_{N-2})}{2 \Delta t}
+        + \mathcal{O}(\Delta t^2).
+        \end{aligned}
+    \end{equation*}
+    Hence, we will use the approximations 
+    \begin{equation*}
+        \begin{aligned}
+        u'(t_0) & = \frac{-3 u_0 + 4 u_1 - u_2}{2 \Delta t}, \\
+        u'(t_N) & = \frac{3 u_N - 4 u_{N-1} + u_{N-2}}{2 \Delta t},
+        \end{aligned}
+    \end{equation*}
+    which we can substitute into the Robin conditions 
+    to get 
+    \begin{equation}\label{eq:l17:robin-one-sided}
+        \begin{aligned}
+            a_0 \frac{-3 u_0 + 4 u_1 - u_2}{2 \Delta t}
+            - \alpha_0 u_0  & = \beta_0 \\
+            a_N \frac{3 u_N - 4 u_{N-1} + u_{N-2}}{2 \Delta t}
+            - \alpha_1 u_N & = \beta_1.
+        \end{aligned}
+    \end{equation}
+
+
+    \item {\bf (Option 2: Centered difference with 
+    ghost points)} 
+    Alternatively, we apply centered difference formulae 
+    to estimate $u'$ at both end points 
+    \begin{equation*}
+        \begin{aligned}
+            u'(0) & = \frac{u(t_1) - u(t_{-1})}{2 \Delta t} + \mathcal{O}(\Delta t^2), \\
+            u'(1) & = \frac{u(t_{N+1}) - u(t_{N-1})}{2 \Delta t} + \mathcal{O}(\Delta t^2).
+        \end{aligned}
+    \end{equation*}
+    Hence, we can use these formulae to impose the 
+    boundary conditions 
+    \begin{equation}\label{eq:l17:robin-centered}
+        \begin{aligned}
+            a_0 \frac{u_1 - u_{-1}}{2 \Delta t}
+            - \alpha_0 u_0  & = \beta_0 \\
+            a_N \frac{u_{N+1} -  u_{N-1}}{2 \Delta t}
+            - \alpha_1 u_N & = \beta_1.
+        \end{aligned}
+    \end{equation}
+    Since we now have additional variables, i.e., $u_{-1}$ and 
+    $u_{N+1}$ we also impose the discrete ODE at 
+    $t_0$ and $t_N$ to close the system.
+\end{itemize}
+
+
+\section*{Step 3: Assemble matrices}
+With our discretizations at hand, we now need to assemble 
+the requisite matrices for our linear system to solve for 
+the solution vector $\ub$. Let us begin term by term 
+following our derivation of the difference formulae.
+
+\begin{itemize}
+    \item {\bf The $c(t)u(t)$ term:} This term is simply represented
+    via a diagonal matrix, recall \eqref{eq:l17:diag-op}, 
+    \begin{equation*}
+        c(t_j) u(t_j) \approx (C \ub)_j, \qquad C = 
+        \begin{bmatrix}
+            0 & & & & & & \\ 
+              & c_1 & &  & & &\\
+              & & c_2 &  & & &\\
+              & & &  c_3 & & &\\ 
+              & & &   &  \ddots & & \\
+              & & & & &    c_{N-1} & \\ 
+              & & & & &    &  0
+        \end{bmatrix}
+    \end{equation*} 
+    Notice the first and last rows are zero since 
+    those will be given by the boundary conditions. 
+    \item {\bf The $b u'$ term:} This term is 
+    represented, following \eqref{eq:l17:adv-op}, as 
+    \begin{equation*}
+        b(t_j) u'(t_j) \approx (B \ub)_j \qquad 
+        B = \frac{1}{2 \Delta t} 
+        \begin{bmatrix}
+            0 & & & & & & \\ 
+            -b_1 &  0     & b_1 & & & & \\ 
+                 & - b_2  & 0   & b_2 & & & \\ 
+                 &        & \ddots & \ddots & \ddots & & \\ 
+                 &   &  & -b_{N-2}   & 0 &b_{N-2} & \\
+                 &   &  &  & -b_{N-1}   & 0 &b_{N-1} \\
+                 & & & & & & 0
+        \end{bmatrix}
+    \end{equation*}
+    \item {\bf The $(a u')'$ term:} For this term we simply 
+    write \eqref{eq:l17:diffusion-op} in matrix form 
+    by ignoring the boundary terms once more, 
+    {\scriptsize
+    \begin{equation*}
+        \begin{aligned}
+        &(a u')'(t_j) \approx (A \ub)_j,\\ 
+        &A = \frac{1}{\Delta t^2} 
+        \begin{bmatrix}
+            0 & & & & & &  \\
+            a_{1-1/2} & -(a_{1-1/2} + a_{1+1/2}) & a_{1 + 1/2} & &  \\
+                      & a_{2 - 1/2} & -(a_{2 -1/2 } + a_{2 + 1/2}) & a_{2 + 1/2}&  \\
+                      &       \ddots        & \ddots & \ddots &    \\
+                      &  a_{N-2 - 1/2} & -(a_{N-2 - 1/2} + a_{N-2 + 1/2})  & a_{N-2 + 1/2} &  \\
+                      &   & a_{N-1-1/2} & -(a_{N - 1-1/2} + a_{N-1 +1/2})  & a_{N-1+1/2}   \\
+                                                                                & & & &   0
+        \end{bmatrix}
+    \end{aligned}
+    \end{equation*}
+    }
+    \item {\bf The boundary conditions:} Finally, using the 
+    one sided formulae for the derivatives on the boundary
+    we can approximate the boundary operators, reading off of
+     \eqref{eq:l17:robin-one-sided}, 
+     via the matrix $R$ defined below
+    \begin{equation*}
+        R = 
+        \begin{bmatrix}
+         \frac{-3 a_0}{2 \Delta t} - \alpha_0 & 
+        \frac{2 a_0}{\Delta t} & -\frac{a_0}{2 \Delta t}  &  & \\ 
+        & & & & \\ 
+        & & \frac{a_N}{2 \Delta t} & -\frac{2 a_N}{\Delta t} & \frac{3 a_N}{2 \Delta t} - \alpha_1         
+        \end{bmatrix},
+    \end{equation*}
+    Notice that this matrix is zero everywhere except for the first and last rows. 
+    Then $R \ub$ returns a vector which is only nonzero in its 
+    first and last entries. 
+\end{itemize}
+Finally, write 
+\begin{equation*}
+    D = -A + B + C + R , \qquad \fb = (\beta_0, f_1, \dots, f_{N-1}, \beta_1). 
+\end{equation*}
+Then the numerical solution $\ub$ can be computed by solving the 
+linear system 
+\begin{equation*}
+    D \ub = \fb.
+\end{equation*}
+As usual, this matrix is very sparse and so the system can be 
+solved efficiently using sparse linear algebra or iterative schemes. 
+
+
+
+% \bibliographystyle{plainnat}
+% \bibliography{references}
