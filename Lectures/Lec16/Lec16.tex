@@ -152,7 +152,75 @@ but now with an additional first order derivative.
     \end{itemize}
 \end{example}
 
+\section{On error analysis for BVP solvers}
 
-
+Let us now take a closer look at the error analysis for BVP solvers and try 
+to justify why we see $\mathcal{O}(\Delta t^2)$ convergence for 
+\Cref{ex:l16:poisson}. Define the truncation error 
+\begin{equation}\label{eq:l16:local-truncation}
+    \tau_n = \frac{u(t_{n-1}) - 2 u(t_n) + u(t_{n+1})}{\Delta t^2} - f(t_n),
+\end{equation}
+that is, the residual of the discretized ODE after plugging in the 
+true solution. Also define the global error 
+\begin{equation*}
+    e_n = u(t_n) - u_n,
+\end{equation*}
+both of these are the quantities that we have worked with when we analyzed 
+the error of IVP solvers. Now also note that since $u_n$ is the solution 
+to the discrete problem then 
+\begin{equation*}
+    \frac{u_{n-1} - 2 u_n + u_{n+1}}{\Delta t^2} - f(t_n) = 0.
+\end{equation*}
+Hence, subtracting the above expression from \eqref{eq:l16:local-truncation}
+we obtain 
+\begin{equation*}
+    \tau_n = \frac{ e_{n-1} - 2 e_n + e_{n+1}}{\Delta t ^2}, 
+\end{equation*}
+which holds for $n=1, \dots, N-1$. On the boundaries we have $u_0 = u(t_0)
+= c_0$ and $u_N = u(1) = c_1$ so the error is zero 
+\begin{equation*}
+    e_0 = e_N = 0.
+\end{equation*}
+Write $\eb = (e_1, \dots, e_{N-1})$ and $\pmb{\tau} = (\tau_1, \dots, \tau_{N-1})$. 
+Then we have that 
+\begin{equation*}
+    A \eb = \Delta t^2 \pmb{\tau} \Rightarrow \eb = \Delta t^2 A^{-1} \pmb{\tau}, 
+\end{equation*}
+where 
+\begin{equation*}
+    A = \begin{bmatrix}
+        -2 & 1 & 0 & & \cdots & 0 \\ 
+        1 &  -2 & 1 & 0 & \cdots & 0 \\ 
+        0 & 1 & -2 & 1 & \cdots & 0 \\ 
+         &  & \ddots & \ddots & \ddots & \\ 
+         0 & \cdots & 0 & 1 & -2 & 1 \\ 
+         0 & \cdots &   & 0 & 1 & -2
+    \end{bmatrix}.
+\end{equation*}
+Thus, we have that 
+\begin{equation*}
+    \| \eb \|_\infty \le \Delta t^2 \| A^{-1} \|_\infty \| \pmb{\tau}\|_\infty,
+\end{equation*}
+where we recall that for an arbitrary vector $\xb$ the $\infty$-norm 
+is defined as 
+\begin{equation*}
+    \| \xb\|_{\infty} = \max_{j} |x_j|
+\end{equation*}
+and furthermore, 
+\begin{equation*}
+    \| A \|_{\infty} = \max_{\xb} \frac{\| A \xb \|_{\infty}}{\| \xb \|_{\infty}}
+    = \max_{i} \sum_{j} |a_{ij}|.
+\end{equation*}
+It can be shown that $\| A^{-1} \|_\infty \le \frac{N^2}{4}$ 
+and since $\Delta t = 1/N$ then we have the bound, 
+\begin{equation*}
+    \| \eb \|_\infty \le 
+     \frac{1}{N^2}\frac{N^2}{4} \| \pmb \tau \|_\infty
+     = \frac{1}{4} \| \pmb \tau \|_\infty.
+\end{equation*}
+At the same time, we already checked that 
+$|\tau_n| = \mathcal{O}(\Delta t^2)$ which implies 
+$\| \pmb \tau \|_\infty = \mathcal{O}(\Delta t^2)$ 
+and so $\| \eb \|_\infty = \mathcal{O}(\Delta t^2)$.
 % \bibliographystyle{plainnat}
 % \bibliography{references}

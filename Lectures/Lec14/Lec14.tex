@@ -35,7 +35,7 @@ On the other hand
 Thus, for the numerical solution, we can simply choose $\Delta t_n$ 
 such that 
 \begin{equation}\label{eq:l13-disp2}
-    \frac{ \Delta t_n^2 }{2} | f_{n+1} - f_n| \le \text{TOL}.
+    \frac{ \Delta t_n }{2} | f_{n+1} - f_n| \le \text{TOL}.
 \end{equation}
 This is efficient because if our proposed $\Delta t_n$ is accepted 
 then we can directly use $f_{n+1}$ to compute our forward Euler step 
@@ -46,7 +46,8 @@ Various strategies exist for adaptation of the
 $\Delta t_n$ that are beyond the scope of the course. A simple 
 approach is to start with the error estimate 
 \begin{equation*}
-    \text{ERROR} =  \frac{ [\Delta t_n]_{\text{old}}^2 }{2} | f_{n+1} - f_n| 
+    \text{ERROR} =  
+    \frac{ [\Delta t_n]_{\text{old}} }{2} | f_{n+1} - f_n| 
     \approx C [\Delta t_n]_{\text{old}}^2,
 \end{equation*}
 where we wrote $[\Delta t_n]_{\text{old}}$ to denote the step-size 
