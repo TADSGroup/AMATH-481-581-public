@@ -1,6 +1,6 @@
 
 
-\chapter{Ansatz Methods and Weak Solutions}
+\chapter{Ansatz Methods and Spectral Collocation}
 
 Up to this point in the course we have mostly represented the solutions of ODEs (either IVP or BVP) on some interval $[a, b] \subseteq \R$ 
 using {\it mesh functions}, effectively storing the numerical solution 
@@ -98,10 +98,25 @@ uniform grid to obtain the system of equations
     \sum_{n=1}^{N-1} c_n (n \pi)^2 \varphi_n(j \Delta t) = f(j \Delta t), \qquad j = 1, \dots, N-1,
 \end{equation*}
 which in matrix form is 
-\begin{equation*}
+\begin{equation}\label{eq:l18:linear-system}
     A \cb = \fb, 
-\end{equation*}
+\end{equation}
 where $A_{jn}= (n \pi)^2 \sin( n \pi j \Delta t)$ and $f_j = f(j \Delta t)$. 
 
+\begin{quote}
+The method we just described, using the $\sin$ basis, is an 
+instance of a spectral collocation method \cite{trefethen2000spectral}.
+A collocation method is any ansatz method where we assume 
+\eqref{eq:l18:u-linear-expansion} for some basis $\varphi_n$, 
+plug it into the BVP, and ask for the residual to be zero on 
+a set of grid points. 
+\end{quote}
 
+The specific instance of the spectral collocation method with 
+the $\sin$ basis, is incredibly fast since the linear 
+system \eqref{eq:l18:linear-system} can be solved in 
+$\mathcal{O}(N \log N)$ using the discrete sine transform.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
 
