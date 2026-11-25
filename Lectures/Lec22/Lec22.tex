@@ -1,6 +1,191 @@
 \chapter{Solving the Heat Equation with the Method of Lines}
 
+In this lecture we take a close look at the method of lines for solving 
+the 1D heat equation 
+\begin{equation*}
+    \left\{
+\begin{aligned}
+    & \frac{\partial u}{\partial t} = \frac{\partial^2 u}{\partial x^2} 
+    + f, \qquad (t, x) \in (0, 1] \times (0, 1), \\
+    & u(0, x) = c(x), \qquad x \in(0,1), \\ 
+    & u(t, 0) = u(t, 1) = 0, \qquad t \in [0, 1], 
+\end{aligned}
+    \right.
+\end{equation*}
+i.e., by turning our PDE into a system of ODEs. The 
+method of lines for arbitrary time-dependent PDEs consists of the following steps:
+
+\begin{enumerate}
+    \item Discretize the PDE in space using a method of choice, e.g., FDM, spectral, FEM, etc.
+    \item Write down a system of ODEs for the coefficients describing the spatial discretization. 
+    \item Solve the system of ODEs using an appropriate time integrator. 
+\end{enumerate}
+
+We will now describe these steps for our PDE. 
+
+\subsection*{Discretize in space:}
+
+We will use the finite difference method as in the previous lecture. 
+Let us consider a uniform spatial grid, 
+$x_m = m \Delta x$ for $m =0, \dots, M$ and $\Delta x = 1/M$. 
+Since the right-hand side of the PDE only involves $u_{xx}$ we can employ 
+the centered difference formula to write 
+\begin{equation*}
+    u_{xx}(t, x_m)  = \frac{u(t, x_{m-1}) - 2 u(t, x_m) + u(t, x_{m+1})}{\Delta x^2} 
+    + \mathcal{O}(\Delta x^2). 
+\end{equation*}
+We also note that the Dirichlet boundary conditions imply that 
+\begin{equation*}
+    u(t, x_0) = u(t, x_M) = 0.
+\end{equation*}
+Thus, evaluating the PDE at the points $(t, x_m)$ we have the approximation 
+\begin{equation*}
+    \left\{
+\begin{aligned}
+    & \frac{\partial u}{\partial t}(t, x_m) =
+    \frac{u(t, x_{m-1}) - 2 u(t, x_m) + u(t, x_{m+1})}{\Delta x^2} 
+      + f(t , x_m) + \mathcal{O}(\Delta x^2), \qquad t \in (0, 1], \\
+    & u(0, x_m) = c(x_m), \qquad m = 1, \dots, M-1, \\ 
+    & u(t, x_0) = u(t, x_M) = 0, \qquad t \in [0, 1], 
+\end{aligned}
+    \right.
+\end{equation*}
+
+\subsection*{Write down the semi-discrete PDE as a system of ODEs:}
+
+Let us now introduce the functions $u_m: [0,1] \to \R$ such that 
+$u_m(t) \approx u(t, x_m)$. Notice that, thanks to the boundary 
+conditions, we immediately have $u_0(t) = u_M(t) = 0$. 
+For the rest of the $u_m$'s we write, by dropping the $\mathcal{O}(\Delta x^2)$ 
+error terms, the system of ODEs 
+\begin{equation*}
+    \begin{aligned}
+            u'_1 &= \frac{1}{\Delta x^2} (-2 u_1(t) + u_2(t) ) + f_1(t), \\ 
+            u'_m &= \frac{1}{\Delta x^2} (u_{m-1}(t) - 2 u_m(t) + u_{m+1}(t)) + f_m(t), \quad 
+            m = 2,\dots, M-2, \\ 
+            u'_{M-1}& = \frac{1}{\Delta x^2} (u_{M-2}(t) - 2 u_{M-1}(t) ) + f_{M-1}(t),
+    \end{aligned}
+\end{equation*}
+with initial condition $u_m(0) = c_m = c(x_m)$ and source functions $f_m(t) = f(t, x_m)$. Thus, we can rewrite this 
+system of ODEs in matrix form as 
+\begin{equation}\label{eq:heat-eqn-semi-discrete}
+    \ub'(t) = A \ub(t) + \fb(t), \qquad \ub(0) = \cb,
+\end{equation}
+where 
+\begin{equation*}
+    A = \frac{1}{\Delta x^2}
+    \begin{bmatrix}
+        -2 & 1 & & & \\
+        1 & -2 & 1 & & \\
+        & \ddots & \ddots & \ddots & \\
+        & & 1 & -2 & 1 \\
+        & & & 1 & -2
+    \end{bmatrix} \in \R^{(M-1) \times (M-1)},
+\end{equation*}
+and $\ub(t) = (u_1(t), \dots, u_{M-1}(t))$,
+$\fb(t) = (f_1(t), \dots, f_{M-1}(t))$,
+and $\cb = (c_1, \dots, c_{M-1})$.
+
+\subsection*{Solve the ODE system using an appropriate integrator:}
+With the ODE system at hand, we can now use our favorite methods from Part I of the course 
+to approximate the solution $\ub(t)$. For example, if we use forward Euler, we obtain 
+\begin{equation*}
+    \ub_{n+1} = \ub_n + \Delta t \left( A \ub_n + \fb_n \right), \qquad n = 0, \dots, N-1, 
+\end{equation*}
+where $\Delta t = 1/N$ as usual.  
+Alternatively, we could have used any other method 
+from Part I, such as Runge--Kutta or linear multistep methods, as well as implicit methods such as 
+backward Euler, 
+\begin{equation*}
+    \ub_{n+1} = \ub_n + \Delta t \left( A \ub_{n+1} + \fb_{n+1} \right), \qquad n = 0, \dots, N-1.
+\end{equation*}
+Indeed the choice of the solver is a delicate matter in this step, due to the fact that 
+the system \eqref{eq:heat-eqn-semi-discrete} can become very stiff. 
+
+To see this, consider the simpler problem when $\fb = 0$ so that 
+the ODE system is simply $\ub' = A \ub$.  
+We note that the matrix $A$ is symmetric and negative definite, and so 
+is diagonalizable. In fact, its eigenvectors and eigenvalues are
+\begin{equation*}
+    \begin{gathered}
+    \qb_k = \big( \sin(k \pi x_1), \sin(k \pi x_2), \dots, \sin(k \pi x_{M-1}) \big), \\
+    \lambda_k = -\frac{4}{\Delta x^2} \sin^2\left( \frac{k \pi \Delta x}{2} \right),
+    \qquad k = 1, \dots, M-1,
+    \end{gathered}
+\end{equation*}
+i.e., $(\qb_k)_m = \sin(k \pi m \Delta x)$. This can be verified directly using the 
+sine identity
+$\sin(\alpha - \beta) + \sin(\alpha + \beta) = 2 \sin(\alpha) \cos(\beta)$, which gives
+\begin{equation*}
+    \frac{(\qb_k)_{m-1} - 2 (\qb_k)_m + (\qb_k)_{m+1}}{\Delta x^2}
+    = \frac{2 \cos(k \pi \Delta x) - 2}{\Delta x^2} (\qb_k)_m
+    = -\frac{4}{\Delta x^2} \sin^2\left( \frac{k \pi \Delta x}{2} \right) (\qb_k)_m,
+\end{equation*}
+where the first and last rows are covered by the fact that
+$(\qb_k)_0 = \sin(0) = 0$ and $(\qb_k)_M = \sin(k \pi) = 0$.
+All eigenvalues are negative and they range between
+\begin{equation*}
+    \lambda_1 = -\frac{4}{\Delta x^2} \sin^2\left( \frac{\pi \Delta x}{2} \right) \approx - \pi^2
+    \qquad \text{and} \qquad
+    \lambda_{M-1} = -\frac{4}{\Delta x^2} \cos^2\left( \frac{\pi \Delta x}{2} \right) \approx - \frac{4}{\Delta x^2}.
+\end{equation*}
+Now recall that for forward Euler to remain absolutely stable for an ODE system we needed 
+\begin{equation*}
+    \Delta t \le \min_k \frac{2}{| \lambda_k | },
+\end{equation*}
+which in this case, for small $\Delta x$, gives the condition 
+\begin{equation*}
+    \Delta t \le \frac{1}{2} \Delta x^2.
+\end{equation*}
+In other words, as we refine the spatial grid $\Delta x$ the time step $\Delta t$ 
+should be refined quadratically to obtain a stable solution.
+
+\begin{quote}
+    This is a very severe constraint that is inherited by other explicit solvers as well, 
+    and is due to the fact that our ODE system \eqref{eq:heat-eqn-semi-discrete} is 
+    very stiff. This behavior is also inherited by other parabolic PDEs and so 
+    when solving such problems we try to avoid using explicit ODE solvers and rely on 
+    implicit solvers.
+\end{quote}
+
+We demonstrate this behavior in \Cref{fig:heat-fe-vs-be} where we take $f = 0$,
+$M = 50$ (so that $\Delta x^2/2 = 2 \times 10^{-4}$), and an initial condition $c(x)$
+that is a mixture of a skinny and a wide Gaussian. Since the solution decays 
+quickly in this case, we only solve the problem on the shorter time interval 
+$t \in (0, 0.1]$ instead of $(0, 1]$. Backward Euler with
+$\Delta t / \Delta x^2 = 2.5$ and forward Euler with $\Delta t / \Delta x^2 \approx 0.48$
+produce essentially the same solution. However, increasing the forward Euler
+time step only slightly, to $\Delta t / \Delta x^2 \approx 0.507$, leads to
+a growing high frequency oscillation in the numerical solution. This is
+precisely the threshold identified above.
+Taking $\Delta t = 10^{-3}$, the time step used for backward Euler, forward Euler
+blows up and reaches values of order $10^{90}$ by $t = 0.1$.
+
+Finally, in \Cref{fig:heat-forced} we solve the problem with a nontrivial
+source term $f(x)$ using backward Euler with an even larger time step, 
+$\Delta t / \Delta x^2 = 5$, on the time interval $t \in (0, 0.5]$ (which is already
+long enough for the solution to settle), and observe that
+the solution converges to the steady state $u_\infty$, which solves the
+BVP $-u_\infty'' = f$ with $u_\infty(0) = u_\infty(1) = 0$.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=\textwidth]{./Lectures/Lec22/heat_fe_vs_be.png}
+    \caption{Solutions of the heat equation with $f = 0$ using backward Euler (left)
+    and forward Euler with a time step slightly below (middle) and slightly
+    above (right) the stability threshold $\Delta t \le \Delta x^2/2$.}
+    \label{fig:heat-fe-vs-be}
+\end{figure}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=\textwidth]{./Lectures/Lec22/heat_forced.png}
+    \caption{Heat equation with a source term $f(x)$ that is a mixture of three
+    Gaussians (left). The backward Euler solution (right) converges to the
+    steady state $u_\infty$ (middle) as $t$ grows.}
+    \label{fig:heat-forced}
+\end{figure}
 
 
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}
